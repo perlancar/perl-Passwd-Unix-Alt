@@ -868,6 +868,26 @@ sub groups_from_gshadow {
 	my $uid = uid('example');
 	del("example");
 
+=head1 ABOUT PASSWD::UNIX::ALT
+
+Passwd::Unix::Alt is a fork of Strzelecki Lukasz's L<Passwd::Unix> v0.52, which
+I forked to scratch some of I<my> itches, and which I hope can be merged back to
+Passwd::Unix eventually. The rest of the documentation is Passwd::Unix's.
+
+Notable differences:
+
+=over 4
+
+=item * does not require root privileges when manipulating custom files
+
+useful for testing.
+
+=item * report error status in $!
+
+Instead of just returning true/false status.
+
+=back
+
 =head1 ABSTRACT
 
 Passwd::Unix provides an abstract object-oriented and function interface to
