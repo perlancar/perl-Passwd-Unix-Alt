@@ -10,7 +10,6 @@ use File::Spec;
 use File::Path;
 use File::Copy;
 use File::Basename qw(dirname basename);
-use IO::Compress::Bzip2;
 use Struct::Compare;
 use Crypt::PasswdMD5 qw(unix_md5_crypt);
 require Exporter;
@@ -129,41 +128,28 @@ sub _do_backup {
 
 	my $umask = umask $self->{'umask'};
 
-	my $dir = File::Spec->catfile($self->passwd_file.'.bak', ($year+1900).'.'.($mon+1).'.'.$mday.'-'.$hour.'.'.$min.'.'.$sec);
-	mkpath $dir; chmod 0500, $dir;
-
-	my $cpasswd		= File::Spec->catfile($dir, basename($self->passwd_file())  . q/.bz2/);
-	my $cgroup		= File::Spec->catfile($dir, basename($self->group_file())   . q/.bz2/);
-	my $cshadow		= File::Spec->catfile($dir, basename($self->shadow_file())  . q/.bz2/);
-	my $cgshadow	= File::Spec->catfile($dir, basename($self->gshadow_file()) . q/.bz2/);
+	my $cpasswd		= $self->passwd_file()  . q/.bak/;
+	my $cgroup		= $self->group_file()   . q/.bak/;
+	my $cshadow		= $self->shadow_file()  . q/.bak/;
+	my $cgshadow	= $self->gshadow_file() . q/.bak/;
 
 	# passwd
-	my $compress = IO::Compress::Bzip2->new($cpasswd, AutoClose => 1, Append => 1, BlockSize100K => 9);
-	open(my $fh, '<', $self->passwd_file) or (umask $umask and $errstr = "Can't open passwd file ".$self->passwd_file.": $!" and return);
-	$compress->print($_) while <$fh>;
-	$compress->close;
+	copy($self->passwd_file, $cpasswd) or (umask $umask and $errstr = "Can't backup passwd file ".$self->passwd_file.": $!" and return);
 	chmod 0644, $cpasswd;
 
 	# group
-	$compress = IO::Compress::Bzip2->new($cgroup, AutoClose => 1, Append => 1, BlockSize100K => 9);
-	open($fh, '<', $self->group_file) or (umask $umask and $errstr = "Can't open group file ".$self->group_file.": $!" and return);
-	$compress->print($_) while <$fh>;
-	$compress->close;
+	copy($self->group_file, $cgroup) or (umask $umask and $errstr = "Can't backup group file ".$self->group_file.": $!" and return);
 	chmod 0644, $cgroup;
 
 	# shadow
-	$compress = IO::Compress::Bzip2->new($cshadow, AutoClose => 1, Append => 1, BlockSize100K => 9);
-	open($fh, '<', $self->shadow_file) or (umask $umask and $errstr = "Can't open shadow file ".$self->shadow_file.": $!" and return);
-	$compress->print($_) while <$fh>;
-	$compress->close;
-	chmod 0400, $cshadow;
+	copy($self->shadow_file, $cshadow) or (umask $umask and $errstr = "Can't backup shadow file ".$self->shadow_file.": $!" and return);
+	chmod 0600, $cshadow;
 
 	# gshadow
-	$compress = IO::Compress::Bzip2->new($cgshadow, AutoClose => 1, Append => 1, BlockSize100K => 9);
-	open($fh, '<', $self->gshadow_file) or (umask $umask and $errstr = "Can't open gshadow file ".$self->gshadow_file.": $!" and return);
-	$compress->print($_) while <$fh>;
-	$compress->close;
-	chmod 0400, $cgshadow;
+	if (-f $self->gshadow_file) {
+            copy($self->gshadow_file, $cgshadow) or (umask $umask and $errstr = "Can't copy gshadow file ".$self->gshadow_file.": $!" and return);
+            chmod 0600, $cgshadow;
+        }
 
 	umask $umask;
 
