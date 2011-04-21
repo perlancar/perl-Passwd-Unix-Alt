@@ -83,10 +83,10 @@ sub check_sanity {
 	}
 
         unless ($quiet) {
-		carp(q/Insecure permissions to group file!/)	and sleep(1) if ((stat($self->group_file)  )[2] & 07777) != PERM_GRP;
-		carp(q/Insecure permissions to passwd file!/)	and sleep(1) if ((stat($self->passwd_file) )[2] & 07777) != PERM_PWD;
-		carp(q/Insecure permissions to shadow file!/)	and sleep(1) if ((stat($self->shadow_file) )[2] & 07777) != PERM_SHD;
-		carp(q/Insecure permissions to gshadow file!/)	and sleep(1) if ((stat($self->gshadow_file))[2] & 07777) != PERM_GRP;
+		carp(q/Insecure permissions to group file!/)	and sleep(0) if ((stat($self->group_file)  )[2] & 07777) != PERM_GRP;
+		carp(q/Insecure permissions to passwd file!/)	and sleep(0) if ((stat($self->passwd_file) )[2] & 07777) != PERM_PWD;
+		carp(q/Insecure permissions to shadow file!/)	and sleep(0) if ((stat($self->shadow_file) )[2] & 07777) != PERM_SHD;
+		carp(q/Insecure permissions to gshadow file!/)	and sleep(0) if ((stat($self->gshadow_file))[2] & 07777) != PERM_GRP;
 	}
 
 	my %filenames = ( shadow => $self->shadow_file, passwd => $self->passwd_file, group => $self->group_file, gshadow => $self->gshadow_file );
@@ -100,7 +100,7 @@ sub check_sanity {
 	unless(compare([$self->users()], [$self->users_from_shadow()])){
 		carp(qq/\nYour ENVIRONMENT IS INSANE! Users in files "/.$self->passwd_file().q/" and "/.$self->shadow_file().qq/ are diffrent!!!\nI'll continue, but it is YOUR RISK! You'll probably go into BIG troubles!\n\n/);
 		warn "\a\n";
-		sleep 5;
+		sleep 0;
 	}
 
 	return;
