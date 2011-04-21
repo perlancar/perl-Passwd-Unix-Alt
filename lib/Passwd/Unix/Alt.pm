@@ -1,4 +1,5 @@
 package Passwd::Unix;
+# ABSTRACT: Manipulate /etc/{passwd,shadow,group,gshadow} files
 
 use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);
 
@@ -835,10 +836,6 @@ sub groups_from_gshadow {
 }
 #======================================================================
 1;
-
-=head1 NAME
-
-Passwd::Unix
 
 =head1 SYNOPSIS
 
