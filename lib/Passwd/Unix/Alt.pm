@@ -1,4 +1,4 @@
-package Passwd::Unix::Alt;
+package Passwd::Unix;
 # ABSTRACT: Manipulate /etc/{passwd,shadow,group,gshadow} entries
 
 use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);
@@ -874,17 +874,19 @@ Passwd::Unix::Alt is a fork of Strzelecki Lukasz's L<Passwd::Unix> v0.52, which
 I forked to scratch some of I<my> itches, and which I hope can be merged back to
 Passwd::Unix eventually. The rest of the documentation is Passwd::Unix's.
 
+B<Note that the package is still Passwd::Unix>. This is so that
+Passwd::Unix::Alt is a simple drop-in replacement for Passwd::Unix (only a
+simple replace of 'require' or 'use' line is needed).
+
 Notable differences:
 
 =over 4
 
-=item * does not require root privileges when manipulating custom files
+=item * does not require root privileges unless necessary (useful for testing)
 
-useful for testing.
+=item * report error string in $Passwd::Unix::errstr
 
-=item * report error status in $!
-
-Instead of just returning true/false status.
+Instead of just returning true/false status or carping to stderr..
 
 =back
 
