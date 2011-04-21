@@ -1,8 +1,10 @@
-Revision history for Perl extension Passwd::Unix::Alt.
+Revision history for Perl extension Passwd::Unix::Alt
 
 0.5201   2011-04-21
-         - (not yet) Set $! on errors
-         - (not yet) No longer require running as root even (unless necessary)
+         - Set $Passwd::Unix::errstr on errors
+         - No longer require running as root even (unless necessary)
+         - Remove Bzip2, backup are verbatim copies
+         - Add basic test suite
 
 0.52  Sun, 02 Aug 2009 17:11:20 +0200
 	- Logins with a dot are now allowed.

@@ -595,6 +595,7 @@ sub user {
 			next if $a[0] ne $user[0];
 			chomp $a[-1];
 			splice @a, 0, 2;
+                        $errstr = "";
 			return $self->passwd($user[0]), @a;
 		}
 		carp(qq/User "$user[0]" does not exists!/) if $self->warnings();
@@ -810,7 +811,10 @@ sub group {
 		}
 
 		# if searched ground does not exist
-		return undef, [ ] unless defined $gid;
+		unless (defined $gid) {
+                    $errstr = "Unknown group $group";
+                    return undef, [ ];
+                }
 
 		open($fh, '<', $self->passwd_file()) or do { $errstr = "Can't open group file ".$self->group_file.": $!"; return };
 		while(my $line = <$fh>){
