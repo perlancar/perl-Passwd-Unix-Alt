@@ -1,5 +1,5 @@
-package Passwd::Unix;
-# ABSTRACT: Manipulate /etc/{passwd,shadow,group,gshadow} files
+package Passwd::Unix::Alt;
+# ABSTRACT: Manipulate /etc/{passwd,shadow,group,gshadow} entries
 
 use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);
 
