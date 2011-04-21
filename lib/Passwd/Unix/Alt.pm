@@ -1,5 +1,9 @@
-package Passwd::Unix;
+package Passwd::Unix::Alt;
 # ABSTRACT: Manipulate /etc/{passwd,shadow,group,gshadow} entries
+
+=for Pod::Coverage .*
+
+=cut
 
 use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);
 
@@ -318,7 +322,7 @@ sub _set {
 	my ($file, $user, $pos, $val, $count) = @_;
 
 	my @t = split(/::/,(caller(1))[3]);
-	croak(qq/\n"_set" cannot be called from outside of Passwd::Unix!/) if $t[-2] ne 'Unix';
+	croak(qq/\n"_set" cannot be called from outside of Passwd::Unix::Alt!/) if $t[-2] ne 'Alt';
 	unless($_CHECK->{$t[-1]}($val)){
 		carp(qq/Incorrect parameters for "$t[-1]! Leaving unchanged..."/) if $self->warnings();
 		$errstr = qq/Incorrect parameters for "$t[-1]! Leaving unchanged..."/;
@@ -861,16 +865,16 @@ sub groups_from_gshadow {
 
 	use Passwd::Unix::Alt;
 
-	my $pu = Passwd::Unix->new();
+	my $pu = Passwd::Unix::Alt->new();
 
 	# adding a new user
         $pu->user("example", $pu->encpass("my_secret"), $pu->maxuid + 1, 10,
 					  "My User", "/home/example", "/bin/bash");
-	die $Passwd::Unix::errstr if $Passwd::Unix::errstr;
+	die $Passwd::Unix::Alt::errstr if $Passwd::Unix::Alt::errstr;
 
 	# change a user's password
 	$pu->passwd("example", $pu->encpass("newsecret"));
-	die $Passwd::Unix::errstr if $Passwd::Unix::errstr;
+	die $Passwd::Unix::Alt::errstr if $Passwd::Unix::Alt::errstr;
 
 	# list users
 	foreach my $user ($pu->users) {
@@ -882,7 +886,7 @@ sub groups_from_gshadow {
 
 	# delete user
 	$pu->del("example");
-	die $Passwd::Unix::errstr if $Passwd::Unix::errstr;
+	die $Passwd::Unix::Alt::errstr if $Passwd::Unix::Alt::errstr;
 
 	# or
 
@@ -894,10 +898,10 @@ sub groups_from_gshadow {
 
 	user("example", encpass("my_secret"), $pu->maxuid + 1, 10,
 	     "My User", "/home/example", "/bin/bash" );
-	die $Passwd::Unix::errstr if $Passwd::Unix::errstr;
+	die $Passwd::Unix::Alt::errstr if $Passwd::Unix::Alt::errstr;
 
 	passwd("example",encpass("newsecret"));
-	die $Passwd::Unix::errstr if $Passwd::Unix::errstr;
+	die $Passwd::Unix::Alt::errstr if $Passwd::Unix::Alt::errstr;
 
 	foreach my $user (users()) {
 	    print "Username: $user\nFull Name: ", gecos($user), "\n\n";
@@ -906,7 +910,7 @@ sub groups_from_gshadow {
 	my $uid = uid('example');
 
 	del("example");
-	die $Passwd::Unix::errstr if $Passwd::Unix::errstr;
+	die $Passwd::Unix::Alt::errstr if $Passwd::Unix::Alt::errstr;
 
 =head1 ABOUT PASSWD::UNIX::ALT
 
@@ -914,17 +918,13 @@ Passwd::Unix::Alt is a fork of Strzelecki Lukasz's L<Passwd::Unix> v0.52, which
 I forked to scratch some of I<my> itches, and which I hope can be merged back to
 Passwd::Unix eventually. The rest of the documentation is Passwd::Unix's.
 
-B<Note that the package is still Passwd::Unix>. This is so that
-Passwd::Unix::Alt is a simple drop-in replacement for Passwd::Unix (only a
-simple replace of 'require' or 'use' line is needed).
-
 Notable differences:
 
 =over 4
 
 =item * does not require root privileges unless necessary (useful for testing)
 
-=item * report error string in $Passwd::Unix::errstr
+=item * report error string in $Passwd::Unix::Alt::errstr
 
 Instead of just returning true/false status or carping to stderr..
 
@@ -985,14 +985,14 @@ This method is an alias for C<del_user>. It's for transition only.
 This method will delete the list of users. It has no effect if the supplied
 users do not exist.
 
-Set $Passwd::Unix::errstr on error.
+Set $Passwd::Unix::Alt::errstr on error.
 
 =item B<del_group( GROUPNAME0, GROUPNAME1... )>
 
 This method will delete the list of groups. It has no effect if the supplied
 groups do not exist.
 
-Set $Passwd::Unix::errstr on error.
+Set $Passwd::Unix::Alt::errstr on error.
 
 =item B<encpass( PASSWORD )>
 
@@ -1053,7 +1053,7 @@ list consisting of (PASSWORD, UID, GID, GECOS, HOMEDIR, SHELL), or
 undef if no such user exists. If you supply all seven parameters,
 the named user will be created or modified if it already exists.
 
-Set $Passwd::Unix::errstr on error.
+Set $Passwd::Unix::Alt::errstr on error.
 
 =item B<group( GROUPNAME [,GID, ARRAYREF] )>
 
@@ -1064,7 +1064,7 @@ consisting names of users in this GROUP. It will return undef and ref to empty a
 exists. If you supply all three parameters, the named group will be
 created or modified if it already exists.
 
-Set $Passwd::Unix::errstr on error.
+Set $Passwd::Unix::Alt::errstr on error.
 
 =item B<users()>
 

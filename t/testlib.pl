@@ -48,7 +48,7 @@ nobody:!::
 u1:!::
 u2:!::u1
 _
-    $::pu //= Passwd::Unix->new(
+    $::pu //= Passwd::Unix::Alt->new(
         passwd  => "$tmp_dir/passwd",
         group   => "$tmp_dir/group",
         shadow  => "$tmp_dir/shadow",
