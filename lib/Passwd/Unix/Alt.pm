@@ -871,17 +871,30 @@ sub groups_from_gshadow {
 
 =head1 SYNOPSIS
 
-	use Passwd::Unix;
+	use Passwd::Unix::Alt;
 
 	my $pu = Passwd::Unix->new();
-	my $err = $pu->user("example", $pu->encpass("my_secret"), $pu->maxuid + 1, 10,
-						"My User", "/home/example", "/bin/bash" );
-	$pu->passwd("example", $pu->encpass("newsecret"));
+
+	# adding a new user
+        $pu->user("example", $pu->encpass("my_secret"), $pu->maxuid + 1, 10,
+					  "My User", "/home/example", "/bin/bash")
+	    or die $Passwd::Unix::errstr;
+
+	# change a user's password
+	$pu->passwd("example", $pu->encpass("newsecret"))
+	    or die $Passwd::Unix::errstr;
+
+	# list users
 	foreach my $user ($pu->users) {
-		print "Username: $user\nFull Name: ", $pu->gecos($user), "\n\n";
+	    print "Username: $user\nFull Name: ", $pu->gecos($user), "\n\n";
 	}
+
+	# get uid
 	my $uid = $pu->uid('example');
-	$pu->del("example");
+
+	# delete user
+	$pu->del("example")
+	    or die $Passwd::Unix::errstr;
 
 	# or
 
@@ -891,14 +904,21 @@ sub groups_from_gshadow {
 				exists_group user users users_from_shadow del_group
 				group groups groups_from_gshadow);
 
-	my $err = user( "example", encpass("my_secret"), $pu->maxuid + 1, 10,
-					"My User", "/home/example", "/bin/bash" );
-	passwd("example",encpass("newsecret"));
+	user("example", encpass("my_secret"), $pu->maxuid + 1, 10,
+	     "My User", "/home/example", "/bin/bash" );
+	    or die $Passwd::Unix::errstr;
+
+	passwd("example",encpass("newsecret"))
+	    or die $Passwd::Unix::errstr;
+
 	foreach my $user (users()) {
-		print "Username: $user\nFull Name: ", gecos($user), "\n\n";
+	    print "Username: $user\nFull Name: ", gecos($user), "\n\n";
 	}
+
 	my $uid = uid('example');
-	del("example");
+
+	del("example")
+	    or die $Passwd::Unix::errstr;
 
 =head1 ABOUT PASSWD::UNIX::ALT
 
