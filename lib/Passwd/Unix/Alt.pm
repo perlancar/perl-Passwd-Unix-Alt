@@ -50,6 +50,8 @@ my $_CHECK = {
 	'passwd' 	=> sub { return if not defined $_[0]; TRUE},
 };
 #======================================================================
+our $errstr;
+#======================================================================
 my $Self = __PACKAGE__->new();
 #======================================================================
 sub new {
@@ -80,16 +82,11 @@ sub check_sanity {
 		croak('File not found: ' . $_);
 	}
 
-	unless($quiet){
+        unless ($quiet) {
 		carp(q/Insecure permissions to group file!/)	and sleep(1) if ((stat($self->group_file)  )[2] & 07777) != PERM_GRP;
 		carp(q/Insecure permissions to passwd file!/)	and sleep(1) if ((stat($self->passwd_file) )[2] & 07777) != PERM_PWD;
 		carp(q/Insecure permissions to shadow file!/)	and sleep(1) if ((stat($self->shadow_file) )[2] & 07777) != PERM_SHD;
 		carp(q/Insecure permissions to gshadow file!/)	and sleep(1) if ((stat($self->gshadow_file))[2] & 07777) != PERM_GRP;
-	}
-
-	if($( !~ /^0/o){
-		carp(q/Running as "/ . getlogin() . qq/", which has currently no permissions to write to system files. READ ONLY mode ENABLED!/) unless $quiet;
-		return;
 	}
 
 	my %filenames = ( shadow => $self->shadow_file, passwd => $self->passwd_file, group => $self->group_file, gshadow => $self->gshadow_file );
@@ -142,35 +139,36 @@ sub _do_backup {
 
 	# passwd
 	my $compress = IO::Compress::Bzip2->new($cpasswd, AutoClose => 1, Append => 1, BlockSize100K => 9);
-	open(my $fh, '<', $self->passwd_file) or (umask $umask and return);
+	open(my $fh, '<', $self->passwd_file) or (umask $umask and $errstr = "Can't open passwd file ".$self->passwd_file.": $!" and return);
 	$compress->print($_) while <$fh>;
 	$compress->close;
 	chmod 0644, $cpasswd;
 
 	# group
 	$compress = IO::Compress::Bzip2->new($cgroup, AutoClose => 1, Append => 1, BlockSize100K => 9);
-	open($fh, '<', $self->group_file) or (umask $umask and return);
+	open($fh, '<', $self->group_file) or (umask $umask and $errstr = "Can't open group file ".$self->group_file.": $!" and return);
 	$compress->print($_) while <$fh>;
 	$compress->close;
 	chmod 0644, $cgroup;
 
 	# shadow
 	$compress = IO::Compress::Bzip2->new($cshadow, AutoClose => 1, Append => 1, BlockSize100K => 9);
-	open($fh, '<', $self->shadow_file) or (umask $umask and return);
+	open($fh, '<', $self->shadow_file) or (umask $umask and $errstr = "Can't open shadow file ".$self->shadow_file.": $!" and return);
 	$compress->print($_) while <$fh>;
 	$compress->close;
 	chmod 0400, $cshadow;
 
 	# gshadow
 	$compress = IO::Compress::Bzip2->new($cgshadow, AutoClose => 1, Append => 1, BlockSize100K => 9);
-	open($fh, '<', $self->gshadow_file) or (umask $umask and return);
+	open($fh, '<', $self->gshadow_file) or (umask $umask and $errstr = "Can't open gshadow file ".$self->gshadow_file.": $!" and return);
 	$compress->print($_) while <$fh>;
 	$compress->close;
 	chmod 0400, $cgshadow;
 
 	umask $umask;
 
-	return;
+	$errstr = "";
+        return 1;
 }
 #======================================================================
 sub passwd_file {
@@ -241,15 +239,16 @@ sub default_umask {
 *del_user = { };
 *del_user = \&del;
 sub del {
-	return if $( !~ /^0/o;
-
 	my $self = scalar @_ && ref $_[0] eq __PACKAGE__ ? shift : $Self;
 	unless(scalar @_){
 		carp(q|Method/function "del" cannot run without params!|) if $self->warnings();
-		return;
+		$errstr = q|Method/function "del" cannot run without params!|;
+                return;
 	}
 
-	$self->_do_backup() if $self->backup();
+        if ($self->backup()) {
+            $self->_do_backup() or return;
+        }
 
 	my $regexp = '^'.join('$|^',@_).'$';
 	$regexp = qr/$regexp/;
@@ -261,8 +260,8 @@ sub del {
 
 	# remove from passwd
 	my $tmp = $self->passwd_file.'.tmp';
-	open(my $fh, '<', $self->passwd_file());
-	open(my $ch, '>', $tmp);
+	open(my $fh, '<', $self->passwd_file()) or do { $errstr = "Can't open passwd file ".$self->passwd_file.": $!"; return };
+	open(my $ch, '>', $tmp) or do { $errstr = "Can't open temp file $tmp: $!"; return };
 	chmod PERM_PWD, $ch;
 	while(my $line = <$fh>){
 		my ($user, undef, undef, $gid) = split(/:/,$line, 5);
@@ -275,26 +274,26 @@ sub del {
 		}
 	}
 	close($fh);close($ch);
-	move($tmp, $self->passwd_file());
+	move($tmp, $self->passwd_file()) or do { $errstr = "Can't replace passwd file ".$self->passwd_file.": $!"; return };
 
 	# remove from shadow
 	$tmp = $self->shadow_file.'.tmp';
-	open($fh, '<', $self->shadow_file());
-	open($ch, '>', $tmp);
+	open($fh, '<', $self->shadow_file()) or do { $errstr = "Can't open shadow file ".$self->shadow_file.": $!"; return };
+	open($ch, '>', $tmp) or do { $errstr = "Can't open temp file $tmp: $!"; return };
 	chmod PERM_SHD, $ch;
 	while(my $line = <$fh>){
 		next if (split(/:/,$line,2))[0] =~ $regexp;
 		print $ch $line;
 	}
 	close($fh);close($ch);
-	move($tmp, $self->shadow_file());
+	move($tmp, $self->shadow_file()) or do { $errstr = "Can't replace shadow file ".$self->shadow_file.": $!"; return };
 
 	# remove from group
 	my $gids = '^'.join('$|^',@gids).'$';
 	$gids = qr/$gids/;
 	$tmp = $self->group_file.'.tmp';
-	open($fh, '<', $self->group_file());
-	open($ch, '>', $tmp);
+	open($fh, '<', $self->group_file()) or do { $errstr = "Can't open group file ".$self->group_file.": $!"; return };
+	open($ch, '>', $tmp) or do { $errstr = "Can't open temp file $tmp: $!"; return };
 	chmod PERM_GRP, $ch;
 	while(my $line = <$fh>){
 		chomp $line;
@@ -303,13 +302,13 @@ sub del {
 		print $ch join(q/:/, $name, $passwd, $gid, $users),"\n";
 	}
 	close($fh);close($ch);
-	move($tmp, $self->group_file());
+	move($tmp, $self->group_file()) or do { $errstr = "Can't replace group file ".$self->group_file.": $!"; return };
 
 	# remove from gshadow
 	if(-f $self->gshadow_file){
 		$tmp = $self->gshadow_file.'.tmp';
-		open($fh, '<', $self->gshadow_file());
-		open($ch, '>', $tmp);
+		open($fh, '<', $self->gshadow_file()) or do { $errstr = "Can't open gshadow file ".$self->gshadow_file.": $!"; return };
+		open($ch, '>', $tmp) or do { $errstr = "Can't open temp file $tmp: $!"; return };
 		chmod PERM_SHD, $ch;
 		while(my $line = <$fh>){
 			chomp $line;
@@ -318,7 +317,7 @@ sub del {
 			print $ch join(q/:/, $name, $passwd, $gid, $users),"\n";
 		}
 		close($fh);close($ch);
-		move($tmp, $self->gshadow_file());
+		move($tmp, $self->gshadow_file()) or do { $errstr = "Can't replace gshadow file ".$self->gshadow_file.": $!"; return };
 	}
 
 	umask $umask;
@@ -328,7 +327,6 @@ sub del {
 }
 #======================================================================
 sub _set {
-	return if $( !~ /^0/o;
 	my $self = scalar @_ && ref $_[0] eq __PACKAGE__ ? shift : $Self;
 	return if scalar @_ < 4;
 	my ($file, $user, $pos, $val, $count) = @_;
@@ -337,10 +335,13 @@ sub _set {
 	croak(qq/\n"_set" cannot be called from outside of Passwd::Unix!/) if $t[-2] ne 'Unix';
 	unless($_CHECK->{$t[-1]}($val)){
 		carp(qq/Incorrect parameters for "$t[-1]! Leaving unchanged..."/) if $self->warnings();
-		return;
+		$errstr = qq/Incorrect parameters for "$t[-1]! Leaving unchanged..."/;
+                return;
 	}
 
-	$self->_do_backup() if $self->backup();
+        if ($self->backup()) {
+            $self->_do_backup() or return;
+        }
 
 	my $umask = umask $self->{'umask'};
 	my $mode	=	$file eq $self->passwd_file()	?	PERM_PWD	:
@@ -350,8 +351,8 @@ sub _set {
 
 	$count ||= 6;
 	my $tmp = $file.'.tmp';
-	open(my $fh, '<', $file);
-	open(my $ch, '>', $tmp);
+	open(my $fh, '<', $file) or do { $errstr = "Can't open file $file: $!"; return };
+	open(my $ch, '>', $tmp) or do { $errstr = "Can't open tmp file $tmp: $!"; return };
 	chmod $mode, $ch;
 	my $ret;
 	while(<$fh>){
@@ -367,11 +368,12 @@ sub _set {
 		}
 	}
 	close($fh);close($ch);
-	move($tmp, $file);
+	move($tmp, $file) or do { $errstr = "Can't replace file $file: $!"; return };
 
 	umask $umask;
 
-	return $ret;
+	$errstr = "";
+        return $ret;
 }
 #======================================================================
 sub _get {
@@ -381,16 +383,18 @@ sub _get {
 
 	unless($_CHECK->{'rename'}($user)){
 		carp(qq/Incorrect user "$user"!/) if $self->warnings();
-		return;
+		$errstr = qq/Incorrect user "$user"!/;
+                return;
 	}
 
-	open(my $fh, '<', $file);
+	open(my $fh, '<', $file) or do { $errstr = "can't open file $file: $!"; return };
 	while(<$fh>){
 		my @a = split /:/;
 		next if $a[0] ne $user;
 		chomp $a[$pos];
 		return $a[$pos];
 	}
+        $errstr = "";
 	return;
 }
 #======================================================================
@@ -461,34 +465,37 @@ sub passwd {
 }
 #======================================================================
 sub rename {
-	return if $( !~ /^0/o;
-
 	my $self = scalar @_ && ref $_[0] eq __PACKAGE__ ? shift : $Self;
 
 	if(scalar @_ != 2){
 		carp(q/Incorrect parameters for "rename"!/) if $self->warnings();
-		return;
+		$errstr = q/Incorrect parameters for "rename"!/;
+                return;
 	}
 
 	my ($user, $val) = @_;
 	unless($self->exists_user($user)){
 		carp(qq/User "$user" does not exists!/) if $self->warnings();
-		return;
+		$errstr = qq/User "$user" does not exists!/;
+                return;
 	}
 
 	my $gid = $self->gid($user);
 	unless(defined $gid){
 		carp(qq/Cannot retrieve GID of user "$user"! Leaving unchanged.../) if $self->warnings();
-		return;
+		$errstr = qq/Cannot retrieve GID of user "$user"! Leaving unchanged.../;
+                return;
 	}
 
-	$self->_do_backup() if $self->backup();
+        if ($self->backup()) {
+            $self->_do_backup() or return;
+        }
 
 	my $umask = umask $self->{'umask'};
 
 	my $tmp = $self->group_file.'.tmp';
-	open(my $fh, '<', $self->group_file());
-	open(my $ch, '>', $tmp);
+	open(my $fh, '<', $self->group_file()) or do { $errstr = "Can't open group file ".$self->group_file.": $!"; return };
+	open(my $ch, '>', $tmp) or do { $errstr = "Can't open tmp file $tmp: $!"; return };
 	chmod PERM_GRP, $ch;
 	while(my $line = <$fh>){
 		chomp $line;
@@ -497,12 +504,12 @@ sub rename {
 		print $ch join(q/:/, $name, $passwd, $gid, $users),"\n";
 	}
 	close($fh);close($ch);
-	move($tmp, $self->group_file());
+	move($tmp, $self->group_file()) or do { $errstr = "Can't replace group file ".$self->group_file.": $!"; return };
 
 	if(-f $self->gshadow_file){
 		my $tmp = $self->gshadow_file.'.tmp';
-		open(my $fh, '<', $self->gshadow_file());
-		open(my $ch, '>', $tmp);
+		open(my $fh, '<', $self->gshadow_file()) or do { $errstr = "Can't open shadow file ".$self->shadow_file.": $!"; return };
+		open(my $ch, '>', $tmp) or do { $errstr = "Can't open tmp file $tmp: $!"; return };
 		chmod PERM_PWD, $ch;
 		while(my $line = <$fh>){
 			chomp $line;
@@ -511,7 +518,8 @@ sub rename {
 			print $ch join(q/:/, $name, $passwd, $gid, $users),"\n";
 		}
 		close($fh);close($ch);
-		move($tmp, $self->gshadow_file());
+		move($tmp, $self->gshadow_file()) or do { $errstr = "Can't replace gshadow file ".$self->gshadow_file.": $!"; return };
+;
 	}
 
 	$self->_set($self->passwd_file(), $user, 0, $val);
@@ -524,25 +532,27 @@ sub rename {
 sub maxgid {
 	my $self = scalar @_ && ref $_[0] eq __PACKAGE__ ? shift : $Self;
 	my $max = 0;
-	open(my $fh, '<', $self->passwd_file());
+	open(my $fh, '<', $self->passwd_file()) or do { $errstr = "Can't open passwd file ".$self->passwd_file.": $!"; return };
 	while(<$fh>){
 		my $tmp = (split(/:/,$_))[3];
 		$max = $tmp > $max ? $tmp : $max;
 	}
 	close($fh);
-	return $max;
+	$errstr = "";
+        return $max;
 }
 #======================================================================
 sub maxuid {
 	my $self = scalar @_ && ref $_[0] eq __PACKAGE__ ? shift : $Self;
 	my $max = 0;
-	open(my $fh, '<', $self->passwd_file());
+	open(my $fh, '<', $self->passwd_file()) or do { $errstr = "Can't open passwd file ".$self->passwd_file.": $!"; return };
 	while(<$fh>){
 		my $tmp = (split(/:/,$_))[2];
 		$max = $tmp > $max ? $tmp : $max;
 	}
 	close($fh);
-	return $max;
+	$errstr = "";
+        return $max;
 }
 #======================================================================
 sub _exists {
@@ -550,8 +560,9 @@ sub _exists {
 	return if scalar @_ != 3;
 	my ($file, $pos, $val) = @_;
 
-	open(my $fh, '<', $file);
-	while(<$fh>){
+	open(my $fh, '<', $file) or do { $errstr = "Can't open file $file: $!"; return };
+	$errstr = "";
+        while(<$fh>){
 		my @a = split /:/;
 		return TRUE if $a[$pos] eq $val;
 	}
@@ -563,9 +574,11 @@ sub exists_user {
 	my ($user) = @_;
 	unless($_CHECK->{rename}($user)){
 		carp(qq/Incorrect user "$user"!/) if $self->warnings();
+                $errstr = qq/Incorrect user "$user"!/;
 		return;
 	}
-	return $self->_exists($self->passwd_file(), 0, $user);
+	$errstr = "";
+        return $self->_exists($self->passwd_file(), 0, $user);
 }
 #======================================================================
 sub exists_group {
@@ -573,9 +586,10 @@ sub exists_group {
 	my ($group) = @_;
 	unless($_CHECK->{rename}($group)){
 		carp(qq/Incorrect group "$group"!/) if $self->warnings();
+                $errstr = qq/Incorrect group "$group"!/;
 		return;
 	}
-	return $self->_exists($self->group_file(), 0, $group);
+        return $self->_exists($self->group_file(), 0, $group);
 }
 #======================================================================
 sub user {
@@ -584,11 +598,12 @@ sub user {
 
 	unless($_CHECK->{rename}($user[0])){
 		carp(qq/Incorrect user "$user[0]"!/) if $self->warnings();
-		return;
+		$errstr = qq/Incorrect user "$user[0]"!/;
+                return;
 	}
 
 	if(scalar @_ != 7){
-		open(my $fh, '<', $self->passwd_file());
+		open(my $fh, '<', $self->passwd_file()) or do { $errstr = "Can't open passwd file ".$self->passwd_file.": $!"; return };
 		while(<$fh>){
 			my @a = split /:/;
 			next if $a[0] ne $user[0];
@@ -597,20 +612,23 @@ sub user {
 			return $self->passwd($user[0]), @a;
 		}
 		carp(qq/User "$user[0]" does not exists!/) if $self->warnings();
-		return;
+		$errstr = qq/User "$user[0]" does not exists!/;
+                return;
 	}
-
-	return if $( !~ /^0/o;
 
 	my @tests = qw(rename passwd uid gid gecos home shell);
 	for(1..6){
 		unless($_CHECK->{$tests[$_]}($user[$_])){
 			carp(qq/Incorrect parameters for "$tests[$_]"!/) if $self->warnings();
+                        $errstr = qq/Incorrect parameters for "$tests[$_]"!/;
 			return;
 		}
 	}
 
-	$self->_do_backup() if $self->backup();
+
+        if ($self->backup()) {
+            $self->_do_backup() or return;
+        }
 
 	my $umask = umask $self->{'umask'};
 
@@ -618,8 +636,8 @@ sub user {
 
 	my $mod;
 	my $tmp = $self->passwd_file.'.tmp';
-	open(my $fh, '<', $self->passwd_file());
-	open(my $ch, '>', $tmp);
+	open(my $fh, '<', $self->passwd_file()) or do { $errstr = "Can't open passwd file ".$self->passwd_file.": $!"; return };
+	open(my $ch, '>', $tmp) or do { $errstr = "Can't open tmp file $tmp: $!"; return };
 	chmod PERM_PWD, $ch;
 	while(<$fh>){
 		my @a = split /:/;
@@ -631,58 +649,61 @@ sub user {
 	close($fh);
 	print $ch join(q/:/, @user),"\n" unless $mod;
 	close($ch);
-	move($tmp, $self->passwd_file());
+	move($tmp, $self->passwd_file()) or do { $errstr = "Can't replace passwd file ".$self->passwd_file.": $!"; return };
 
 	# user already exists
 	if($mod){ $self->passwd($user[0], $passwd); }
 	else{
-		open(my $fh, '>>', $self->shadow_file());
+		open(my $fh, '>>', $self->shadow_file()) or do { $errstr = "Can't open shadow file ".$self->shadow_file.": $!"; return };
 		chmod PERM_SHD, $fh;
 		print $fh join(q/:/, $user[0], $passwd, int(time()/DAY), ('') x 5, "\n");
 		close($fh);
 	}
 
 	umask $umask;
-	return TRUE;
+	$errstr = "";
+        return TRUE;
 }
 #======================================================================
 sub users {
 	my $self = scalar @_ && ref $_[0] eq __PACKAGE__ ? shift : $Self;
 	my @a;
-	open(my $fh, '<', $self->passwd_file());
+	open(my $fh, '<', $self->passwd_file()) or do { $errstr = "Can't open passwd file ".$self->passwd_file.": $!"; return };
 	push @a, (split(/:/,$_))[0] while <$fh>;
 	close($fh);
+        $errstr = "";
 	return @a;
 }
 #======================================================================
 sub users_from_shadow {
-	return if $( !~ /^0/o;
-
 	my $self = scalar @_ && ref $_[0] eq __PACKAGE__ ? shift : $Self;
 	my @a;
-	open(my $fh, '<', $self->shadow_file());
+	open(my $fh, '<', $self->shadow_file()) or do { $errstr = "Can't open shadow file ".$self->shadow_file.": $!"; return };
 	push @a, (split(/:/,$_))[0] while <$fh>;
 	close($fh);
-	return @a;
+	$errstr = "";
+        return @a;
 }
 #======================================================================
 sub del_group {
-	return if $( !~ /^0/o;
-
 	my $self = scalar @_ && ref $_[0] eq __PACKAGE__ ? shift : $Self;
 	my ($group) = @_;
 	unless($_CHECK->{rename}($group)){
 		carp(qq/Incorrect group "$group"!/) if $self->warnings();
+                $errstr = qq/Incorrect group "$group"!/;
 		return;
 	}
 
-	$self->_do_backup() if $self->backup();
+        if ($self->backup()) {
+            $self->_do_backup() or return;
+        }
+
 	my $umask = umask $self->{'umask'};
 
 	my @dels;
 	my $tmp = $self->group_file.'.tmp';
-	open(my $fh, '<', $self->group_file());
-	open(my $ch, '>', $tmp);
+	open(my $fh, '<', $self->group_file()) or do { $errstr = "Can't open group file ".$self->group_file.": $!"; return };
+	open(my $ch, '>', $tmp) or do { $errstr = "Can't open tmp file $tmp: $!"; return };
 	chmod PERM_GRP, $ch;
 	while(my $line = <$fh>){
 		my ($name) = split(/:/,$line,2);
@@ -690,23 +711,24 @@ sub del_group {
 		else{ print $ch $line; }
 	}
 	close($fh);close($ch);
-	move($tmp, $self->group_file());
+	move($tmp, $self->group_file()) or do { $errstr = "Can't replace group file ".$self->group_file.": $!"; return };
 
 	if(-f $self->gshadow_file){
 		my $tmp = $self->gshadow_file.'.tmp';
-		open(my $fh, '<', $self->gshadow_file());
-		open(my $ch, '>', $tmp);
+		open(my $fh, '<', $self->gshadow_file()) or do { $errstr = "Can't open gshadow file ".$self->gshadow_file.": $!"; return };
+		open(my $ch, '>', $tmp) or do { $errstr = "Can't open tmp file $tmp: $!"; return };
 		chmod PERM_SHD, $ch;
 		while(my $line = <$fh>){
 			my ($name) = split(/:/,$line,2);
 			print $ch $line if $group ne $name;
 		}
 		close($fh);close($ch);
-		move($tmp, $self->gshadow_file());
+		move($tmp, $self->gshadow_file()) or do { $errstr = "Can't replace gshadow file ".$self->gshadow_file.": $!"; return };
 	}
 
 	umask $umask;
 
+	$errstr = "";
 	return @dels if wantarray;
 	return scalar @dels;
 }
@@ -716,17 +738,22 @@ sub group {
 	my ($group, $gid, $users) = @_;
 	unless($_CHECK->{rename}($group)){
 		carp(qq/Incorrect group "$group"!/) if $self->warnings();
+		$errstr = qq/Incorrect group "$group"!/;
 		return;
 	}
 
 	if(scalar @_ == 3){
 		return if $( !~ /^0/o;
 
-		$self->_do_backup() if $self->backup();
+                if ($self->backup()) {
+                    $self->_do_backup() or return;
+                }
+
 		my $umask = umask $self->{'umask'};
 
 		unless($_CHECK->{gid}($gid)){
 			carp(qq/Incorrect GID "$gid"!/) if $self->warnings();
+			$errstr = qq/Incorrect GID "$gid"!/;
 			umask $umask;
 			return;
 		}
@@ -734,6 +761,7 @@ sub group {
 #		unless(ref $users and ref $users eq 'ARRAY'){
 		if(defined($users) && ref $users ne 'ARRAY' ){
 			carp(qq/Incorrect parameter "users"! It should be arrayref.../) if $self->warnings();
+			$errstr = qq/Incorrect parameter "users"! It should be arrayref.../;
 			umask $umask;
 			return;
 		}
@@ -741,6 +769,7 @@ sub group {
 		foreach(@$users){
 			unless($_CHECK->{rename}($_)){
 				carp(qq/Incorrect user "$_"!/) if $self->warnings();
+				$errstr = qq/Incorrect user "$_"!/;
 				umask $umask;
 				return;
 			}
@@ -748,8 +777,8 @@ sub group {
 
 		my $mod;
 		my $tmp = $self->group_file.'.tmp';
-		open(my $fh, '<', $self->group_file());
-		open(my $ch, '>', $tmp);
+		open(my $fh, '<', $self->group_file()) or do { $errstr = "Can't open group file ".$self->group_file.": $!"; return };
+		open(my $ch, '>', $tmp) or do { $errstr = "Can't open tmp file $tmp: $!"; return };
 		chmod PERM_GRP, $ch;
 		while(my $line = <$fh>){
 			chomp $line;
@@ -761,13 +790,13 @@ sub group {
 		}
 		print $ch join(q/:/, $group, 'x', $gid, join(q/,/, @$users)),"\n" unless $mod;
 		close($fh);close($ch);
-		move($tmp, $self->group_file());
+		move($tmp, $self->group_file()) or do { $errstr = "Can't replace group file ".$self->group_file.": $!"; return };
 
 		if(-f $self->gshadow_file){
 			my $mod;
 			my $tmp = $self->gshadow_file.'.tmp';
-			open(my $fh, '<', $self->gshadow_file());
-			open(my $ch, '>', $tmp);
+			open(my $fh, '<', $self->gshadow_file()) or do { $errstr = "Can't open gshadow file ".$self->gshadow_file.": $!"; return };
+			open(my $ch, '>', $tmp) or do { $errstr = "Can't open tmp file $tmp: $!"; return };
 			chmod PERM_SHD, $ch;
 			while(my $line = <$fh>){
 				chomp $line;
@@ -779,13 +808,13 @@ sub group {
 			}
 			print $ch join(q/:/, $group, '!', q//, join(q/,/, @$users)),"\n" unless $mod;
 			close($fh);close($ch);
-			move($tmp, $self->gshadow_file());
+			move($tmp, $self->gshadow_file()) or do { $errstr = "Can't replace gshadow file ".$self->gshadow_file.": $!"; return };
 		}
 
 		umask $umask;
 	}else{
 		my ($gid, @users);
-		open(my $fh, '<', $self->group_file());
+		open(my $fh, '<', $self->group_file()) or do { $errstr = "Can't open group file ".$self->group_file.": $!"; return };
 		while(my $line = <$fh>){
 			chomp $line;
 			my ($name, undef, $id, $usrs) = split(/:/,$line,4);
@@ -799,14 +828,15 @@ sub group {
 		# if searched ground does not exist
 		return undef, [ ] unless defined $gid;
 
-		open($fh, '<', $self->passwd_file());
+		open($fh, '<', $self->passwd_file()) or do { $errstr = "Can't open group file ".$self->group_file.": $!"; return };
 		while(my $line = <$fh>){
 			my ($login, undef, undef, $id) = split(/:/,$line,5);
 			next if $id != $gid;
 			push @users, $login;
 		}
 
-		@users = sort @users;
+		$errstr = "";
+                @users = sort @users;
 		for(reverse 0..$#users){
 			last if $_ == 0;
 			splice @users, $_, 1 if $users[$_] eq $users[ $_ - 1 ];
@@ -814,14 +844,15 @@ sub group {
 		return $gid, \@users;
 	}
 
-	return;
+	$errstr = "";
+        return;
 }
 #======================================================================
 sub groups {
 	my $self = scalar @_ && ref $_[0] eq __PACKAGE__ ? shift : $Self;
 	my @a;
-	open(my $fh, '<', $self->group_file());
-	push @a, (split(/:/,$_))[0] while <$fh>;
+	open(my $fh, '<', $self->group_file()) or do { $errstr = "Can't open group file ".$self->group_file.": $!"; return };
+        push @a, (split(/:/,$_))[0] while <$fh>;
 	close($fh);
 	return @a;
 }
@@ -829,9 +860,10 @@ sub groups {
 sub groups_from_gshadow {
 	my $self = scalar @_ && ref $_[0] eq __PACKAGE__ ? shift : $Self;
 	my @a;
-	open(my $fh, '<', $self->gshadow_file()) or return;
+	open(my $fh, '<', $self->gshadow_file()) or do { $errstr = "Can't open gshadow file ".$self->gshadow_file.": $!"; return };
 	push @a, (split(/:/,$_))[0] while <$fh>;
 	close($fh);
+	$errstr = "";
 	return @a;
 }
 #======================================================================
@@ -933,8 +965,8 @@ Constructor. Possible parameters are:
 
 =item B<check_sanity()>
 
-This method check if environment is sane. I.e. if users in I<shadow> and
-in I<passwd> are the same. This method is invoked in constructor.
+This method check if environment is sane. I.e. if users in I<shadow> and in
+I<passwd> are the same. This method is invoked in constructor.
 
 =item B<del( USERNAME0, USERNAME1... )>
 
@@ -942,13 +974,15 @@ This method is an alias for C<del_user>. It's for transition only.
 
 =item B<del_user( USERNAME0, USERNAME1... )>
 
-This method will delete the list of users. It has no effect if the
-supplied users do not exist.
+This method will delete the list of users. It has no effect if the supplied
+users do not exist. Returns true if success, otherwise returns false and set
+$Passwd::Unix::errstr.
 
 =item B<del_group( GROUPNAME0, GROUPNAME1... )>
 
-This method will delete the list of groups. It has no effect if the
-supplied groups do not exist.
+This method will delete the list of groups. It has no effect if the supplied
+groups do not exist. Returns true if success, otherwise returns false and set
+$Passwd::Unix::errstr.
 
 =item B<encpass( PASSWORD )>
 
@@ -1009,6 +1043,8 @@ list consisting of (PASSWORD, UID, GID, GECOS, HOMEDIR, SHELL), or
 undef if no such user exists. If you supply all seven parameters,
 the named user will be created or modified if it already exists.
 
+Returns true if success, otherwise returns false and set $Passwd::Unix::errstr.
+
 =item B<group( GROUPNAME [,GID, ARRAYREF] )>
 
 This method can add, modify, or return information about a group.
@@ -1017,6 +1053,8 @@ list consisting of (GID, ARRAYREF), where ARRAYREF is a ref to array
 consisting names of users in this GROUP. It will return undef and ref to empty array (C<undef, [ ]>) if no such group
 exists. If you supply all three parameters, the named group will be
 created or modified if it already exists.
+
+Returns true if success, otherwise returns false and set $Passwd::Unix::errstr.
 
 =item B<users()>
 
