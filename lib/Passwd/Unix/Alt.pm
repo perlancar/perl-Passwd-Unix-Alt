@@ -736,15 +736,13 @@ sub del_group {
 sub group {
 	my $self = scalar @_ && ref $_[0] eq __PACKAGE__ ? shift : $Self;
 	my ($group, $gid, $users) = @_;
-	unless($_CHECK->{rename}($group)){
+        unless($_CHECK->{rename}($group)){
 		carp(qq/Incorrect group "$group"!/) if $self->warnings();
 		$errstr = qq/Incorrect group "$group"!/;
 		return;
 	}
 
 	if(scalar @_ == 3){
-		return if $( !~ /^0/o;
-
                 if ($self->backup()) {
                     $self->_do_backup() or return;
                 }
