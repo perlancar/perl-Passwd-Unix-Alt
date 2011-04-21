@@ -861,12 +861,12 @@ sub groups_from_gshadow {
 
 	# adding a new user
         $pu->user("example", $pu->encpass("my_secret"), $pu->maxuid + 1, 10,
-					  "My User", "/home/example", "/bin/bash")
-	    or die $Passwd::Unix::errstr;
+					  "My User", "/home/example", "/bin/bash");
+	die $Passwd::Unix::errstr if $Passwd::Unix::errstr;
 
 	# change a user's password
-	$pu->passwd("example", $pu->encpass("newsecret"))
-	    or die $Passwd::Unix::errstr;
+	$pu->passwd("example", $pu->encpass("newsecret"));
+	die $Passwd::Unix::errstr if $Passwd::Unix::errstr;
 
 	# list users
 	foreach my $user ($pu->users) {
@@ -877,8 +877,8 @@ sub groups_from_gshadow {
 	my $uid = $pu->uid('example');
 
 	# delete user
-	$pu->del("example")
-	    or die $Passwd::Unix::errstr;
+	$pu->del("example");
+	die $Passwd::Unix::errstr if $Passwd::Unix::errstr;
 
 	# or
 
@@ -890,10 +890,10 @@ sub groups_from_gshadow {
 
 	user("example", encpass("my_secret"), $pu->maxuid + 1, 10,
 	     "My User", "/home/example", "/bin/bash" );
-	    or die $Passwd::Unix::errstr;
+	die $Passwd::Unix::errstr if $Passwd::Unix::errstr;
 
-	passwd("example",encpass("newsecret"))
-	    or die $Passwd::Unix::errstr;
+	passwd("example",encpass("newsecret"));
+	die $Passwd::Unix::errstr if $Passwd::Unix::errstr;
 
 	foreach my $user (users()) {
 	    print "Username: $user\nFull Name: ", gecos($user), "\n\n";
@@ -901,8 +901,8 @@ sub groups_from_gshadow {
 
 	my $uid = uid('example');
 
-	del("example")
-	    or die $Passwd::Unix::errstr;
+	del("example");
+	die $Passwd::Unix::errstr if $Passwd::Unix::errstr;
 
 =head1 ABOUT PASSWD::UNIX::ALT
 
@@ -979,14 +979,16 @@ This method is an alias for C<del_user>. It's for transition only.
 =item B<del_user( USERNAME0, USERNAME1... )>
 
 This method will delete the list of users. It has no effect if the supplied
-users do not exist. Returns true if success, otherwise returns false and set
-$Passwd::Unix::errstr.
+users do not exist.
+
+Set $Passwd::Unix::errstr on error.
 
 =item B<del_group( GROUPNAME0, GROUPNAME1... )>
 
 This method will delete the list of groups. It has no effect if the supplied
-groups do not exist. Returns true if success, otherwise returns false and set
-$Passwd::Unix::errstr.
+groups do not exist.
+
+Set $Passwd::Unix::errstr on error.
 
 =item B<encpass( PASSWORD )>
 
@@ -1047,7 +1049,7 @@ list consisting of (PASSWORD, UID, GID, GECOS, HOMEDIR, SHELL), or
 undef if no such user exists. If you supply all seven parameters,
 the named user will be created or modified if it already exists.
 
-Returns true if success, otherwise returns false and set $Passwd::Unix::errstr.
+Set $Passwd::Unix::errstr on error.
 
 =item B<group( GROUPNAME [,GID, ARRAYREF] )>
 
@@ -1058,7 +1060,7 @@ consisting names of users in this GROUP. It will return undef and ref to empty a
 exists. If you supply all three parameters, the named group will be
 created or modified if it already exists.
 
-Returns true if success, otherwise returns false and set $Passwd::Unix::errstr.
+Set $Passwd::Unix::errstr on error.
 
 =item B<users()>
 
