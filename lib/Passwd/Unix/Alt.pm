@@ -41,6 +41,9 @@ use constant UMASK		=> 0022;
 use constant PERM_PWD	=> 0644;
 use constant PERM_GRP	=> 0644;
 use constant PERM_SHD	=> 0400;
+use constant PERM_SHD_W	=> 0600;
+use constant PERM_GSD	=> 0440;
+use constant PERM_GSD_W => 0640;
 use constant PATH		=>  qr/^[\w\+_\040\#\(\)\{\}\[\]\/\-\^,\.:;&%@\\~]+\$?$/;
 #======================================================================
 my $_CHECK = {
@@ -89,7 +92,7 @@ sub check_sanity {
 		carp(q/Insecure permissions to group file!/)	and sleep(0) if ((stat($self->group_file)  )[2] & 07777) != PERM_GRP;
 		carp(q/Insecure permissions to passwd file!/)	and sleep(0) if ((stat($self->passwd_file) )[2] & 07777) != PERM_PWD;
 		carp(q/Insecure permissions to shadow file!/)	and sleep(0) if ((stat($self->shadow_file) )[2] & 07777) != PERM_SHD;
-		carp(q/Insecure permissions to gshadow file!/)	and sleep(0) if ((stat($self->gshadow_file))[2] & 07777) != PERM_GRP;
+		carp(q/Insecure permissions to gshadow file!/)	and sleep(0) if ((stat($self->gshadow_file))[2] & 07777) != PERM_GSD;
 	}
 
 	my %filenames = ( shadow => $self->shadow_file, passwd => $self->passwd_file, group => $self->group_file, gshadow => $self->gshadow_file );
@@ -299,7 +302,7 @@ sub del {
 		$tmp = $self->gshadow_file.'.tmp';
 		open($fh, '<', $self->gshadow_file()) or do { $errstr = "Can't open gshadow file ".$self->gshadow_file.": $! (".__FILE__." line ".__LINE__.")"; return };
 		open($ch, '>', $tmp) or do { $errstr = "Can't open temp file $tmp: $! (".__FILE__." line ".__LINE__.")"; return };
-		chmod PERM_SHD, $ch;
+		chmod PERM_GSD, $ch;
 		while(my $line = <$fh>){
 			chomp $line;
 			my ($name, $passwd, $gid, $users) = split(/:/,$line,4);
@@ -337,7 +340,7 @@ sub _set {
 	my $mode	=	$file eq $self->passwd_file()	?	PERM_PWD	:
 					$file eq $self->group_file()	?	PERM_GRP	:
 					$file eq $self->shadow_file()	?	PERM_SHD	:
-														PERM_SHD	;
+														PERM_GSD	;
 
 	$count ||= 6;
 	my $tmp = $file.'.tmp';
@@ -645,6 +648,7 @@ sub user {
 	# user already exists
 	if($mod){ $self->passwd($user[0], $passwd); }
 	else{
+		chmod PERM_SHD_W, $fh;
 		open(my $fh, '>>', $self->shadow_file()) or do { $errstr = "Can't open shadow file ".$self->shadow_file.": $! (".__FILE__." line ".__LINE__.")"; return };
 		chmod PERM_SHD, $fh;
 		print $fh join(q/:/, $user[0], $passwd, int(time()/DAY), ('') x 5, "\n");
@@ -708,7 +712,7 @@ sub del_group {
 		my $tmp = $self->gshadow_file.'.tmp';
 		open(my $fh, '<', $self->gshadow_file()) or do { $errstr = "Can't open gshadow file ".$self->gshadow_file.": $! (".__FILE__." line ".__LINE__.")"; return };
 		open(my $ch, '>', $tmp) or do { $errstr = "Can't open tmp file $tmp: $! (".__FILE__." line ".__LINE__.")"; return };
-		chmod PERM_SHD, $ch;
+		chmod PERM_GSD, $ch;
 		while(my $line = <$fh>){
 			my ($name) = split(/:/,$line,2);
 			print $ch $line if $group ne $name;
@@ -786,7 +790,7 @@ sub group {
 			my $tmp = $self->gshadow_file.'.tmp';
 			open(my $fh, '<', $self->gshadow_file()) or do { $errstr = "Can't open gshadow file ".$self->gshadow_file.": $! (".__FILE__." line ".__LINE__.")"; return };
 			open(my $ch, '>', $tmp) or do { $errstr = "Can't open tmp file $tmp: $! (".__FILE__." line ".__LINE__.")"; return };
-			chmod PERM_SHD, $ch;
+			chmod PERM_GSD, $ch;
 			while(my $line = <$fh>){
 				chomp $line;
 				my ($name, $passwd) = split(/:/,$line,3);
