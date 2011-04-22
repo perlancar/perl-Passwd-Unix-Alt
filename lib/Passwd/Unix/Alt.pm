@@ -250,8 +250,8 @@ sub del {
 
 	# remove from passwd
 	my $tmp = $self->passwd_file.'.tmp';
-	open(my $fh, '<', $self->passwd_file()) or do { $errstr = "Can't open passwd file ".$self->passwd_file.": $!"; return };
-	open(my $ch, '>', $tmp) or do { $errstr = "Can't open temp file $tmp: $!"; return };
+	open(my $fh, '<', $self->passwd_file()) or do { $errstr = "Can't open passwd file ".$self->passwd_file.": $! (".__FILE__." line ".__LINE__.")"; return };
+	open(my $ch, '>', $tmp) or do { $errstr = "Can't open temp file $tmp (1) : $! (".__FILE__." line ".__LINE__.")"; return };
 	chmod PERM_PWD, $ch;
 	while(my $line = <$fh>){
 		my ($user, undef, undef, $gid) = split(/:/,$line, 5);
@@ -264,26 +264,26 @@ sub del {
 		}
 	}
 	close($fh);close($ch);
-	move($tmp, $self->passwd_file()) or do { $errstr = "Can't replace passwd file ".$self->passwd_file.": $!"; return };
+	move($tmp, $self->passwd_file()) or do { $errstr = "Can't replace passwd file ".$self->passwd_file.": $! (".__FILE__." line ".__LINE__.")"; return };
 
 	# remove from shadow
 	$tmp = $self->shadow_file.'.tmp';
-	open($fh, '<', $self->shadow_file()) or do { $errstr = "Can't open shadow file ".$self->shadow_file.": $!"; return };
-	open($ch, '>', $tmp) or do { $errstr = "Can't open temp file $tmp: $!"; return };
+	open($fh, '<', $self->shadow_file()) or do { $errstr = "Can't open shadow file ".$self->shadow_file.": $! (".__FILE__." line ".__LINE__.")"; return };
+	open($ch, '>', $tmp) or do { $errstr = "Can't open temp file $tmp: $! (".__FILE__." line ".__LINE__.")"; return };
 	chmod PERM_SHD, $ch;
 	while(my $line = <$fh>){
 		next if (split(/:/,$line,2))[0] =~ $regexp;
 		print $ch $line;
 	}
 	close($fh);close($ch);
-	move($tmp, $self->shadow_file()) or do { $errstr = "Can't replace shadow file ".$self->shadow_file.": $!"; return };
+	move($tmp, $self->shadow_file()) or do { $errstr = "Can't replace shadow file ".$self->shadow_file.": $! (".__FILE__." line ".__LINE__.")"; return };
 
 	# remove from group
 	my $gids = '^'.join('$|^',@gids).'$';
 	$gids = qr/$gids/;
 	$tmp = $self->group_file.'.tmp';
-	open($fh, '<', $self->group_file()) or do { $errstr = "Can't open group file ".$self->group_file.": $!"; return };
-	open($ch, '>', $tmp) or do { $errstr = "Can't open temp file $tmp: $!"; return };
+	open($fh, '<', $self->group_file()) or do { $errstr = "Can't open group file ".$self->group_file.": $! (".__FILE__." line ".__LINE__.")"; return };
+	open($ch, '>', $tmp) or do { $errstr = "Can't open temp file $tmp: $! (".__FILE__." line ".__LINE__.")"; return };
 	chmod PERM_GRP, $ch;
 	while(my $line = <$fh>){
 		chomp $line;
@@ -292,13 +292,13 @@ sub del {
 		print $ch join(q/:/, $name, $passwd, $gid, $users),"\n";
 	}
 	close($fh);close($ch);
-	move($tmp, $self->group_file()) or do { $errstr = "Can't replace group file ".$self->group_file.": $!"; return };
+	move($tmp, $self->group_file()) or do { $errstr = "Can't replace group file ".$self->group_file.": $! (".__FILE__." line ".__LINE__.")"; return };
 
 	# remove from gshadow
 	if(-f $self->gshadow_file){
 		$tmp = $self->gshadow_file.'.tmp';
-		open($fh, '<', $self->gshadow_file()) or do { $errstr = "Can't open gshadow file ".$self->gshadow_file.": $!"; return };
-		open($ch, '>', $tmp) or do { $errstr = "Can't open temp file $tmp: $!"; return };
+		open($fh, '<', $self->gshadow_file()) or do { $errstr = "Can't open gshadow file ".$self->gshadow_file.": $! (".__FILE__." line ".__LINE__.")"; return };
+		open($ch, '>', $tmp) or do { $errstr = "Can't open temp file $tmp: $! (".__FILE__." line ".__LINE__.")"; return };
 		chmod PERM_SHD, $ch;
 		while(my $line = <$fh>){
 			chomp $line;
@@ -307,7 +307,7 @@ sub del {
 			print $ch join(q/:/, $name, $passwd, $gid, $users),"\n";
 		}
 		close($fh);close($ch);
-		move($tmp, $self->gshadow_file()) or do { $errstr = "Can't replace gshadow file ".$self->gshadow_file.": $!"; return };
+		move($tmp, $self->gshadow_file()) or do { $errstr = "Can't replace gshadow file ".$self->gshadow_file.": $! (".__FILE__." line ".__LINE__.")"; return };
 	}
 
 	umask $umask;
@@ -341,8 +341,8 @@ sub _set {
 
 	$count ||= 6;
 	my $tmp = $file.'.tmp';
-	open(my $fh, '<', $file) or do { $errstr = "Can't open file $file: $!"; return };
-	open(my $ch, '>', $tmp) or do { $errstr = "Can't open tmp file $tmp: $!"; return };
+	open(my $fh, '<', $file) or do { $errstr = "Can't open file $file: $! (".__FILE__." line ".__LINE__.")"; return };
+	open(my $ch, '>', $tmp) or do { $errstr = "Can't open tmp file $tmp: $! (".__FILE__." line ".__LINE__.")"; return };
 	chmod $mode, $ch;
 	my $ret;
 	while(<$fh>){
@@ -358,7 +358,7 @@ sub _set {
 		}
 	}
 	close($fh);close($ch);
-	move($tmp, $file) or do { $errstr = "Can't replace file $file: $!"; return };
+	move($tmp, $file) or do { $errstr = "Can't replace file $file: $! (".__FILE__." line ".__LINE__.")"; return };
 
 	umask $umask;
 
@@ -377,7 +377,7 @@ sub _get {
                 return;
 	}
 
-	open(my $fh, '<', $file) or do { $errstr = "can't open file $file: $!"; return };
+	open(my $fh, '<', $file) or do { $errstr = "can't open file $file: $! (".__FILE__." line ".__LINE__.")"; return };
 	while(<$fh>){
 		my @a = split /:/;
 		next if $a[0] ne $user;
@@ -484,8 +484,8 @@ sub rename {
 	my $umask = umask $self->{'umask'};
 
 	my $tmp = $self->group_file.'.tmp';
-	open(my $fh, '<', $self->group_file()) or do { $errstr = "Can't open group file ".$self->group_file.": $!"; return };
-	open(my $ch, '>', $tmp) or do { $errstr = "Can't open tmp file $tmp: $!"; return };
+	open(my $fh, '<', $self->group_file()) or do { $errstr = "Can't open group file ".$self->group_file.": $! (".__FILE__." line ".__LINE__.")"; return };
+	open(my $ch, '>', $tmp) or do { $errstr = "Can't open tmp file $tmp: $! (".__FILE__." line ".__LINE__.")"; return };
 	chmod PERM_GRP, $ch;
 	while(my $line = <$fh>){
 		chomp $line;
@@ -494,12 +494,12 @@ sub rename {
 		print $ch join(q/:/, $name, $passwd, $gid, $users),"\n";
 	}
 	close($fh);close($ch);
-	move($tmp, $self->group_file()) or do { $errstr = "Can't replace group file ".$self->group_file.": $!"; return };
+	move($tmp, $self->group_file()) or do { $errstr = "Can't replace group file ".$self->group_file.": $! (".__FILE__." line ".__LINE__.")"; return };
 
 	if(-f $self->gshadow_file){
 		my $tmp = $self->gshadow_file.'.tmp';
-		open(my $fh, '<', $self->gshadow_file()) or do { $errstr = "Can't open shadow file ".$self->shadow_file.": $!"; return };
-		open(my $ch, '>', $tmp) or do { $errstr = "Can't open tmp file $tmp: $!"; return };
+		open(my $fh, '<', $self->gshadow_file()) or do { $errstr = "Can't open shadow file ".$self->shadow_file.": $! (".__FILE__." line ".__LINE__.")"; return };
+		open(my $ch, '>', $tmp) or do { $errstr = "Can't open tmp file $tmp: $! (".__FILE__." line ".__LINE__.")"; return };
 		chmod PERM_PWD, $ch;
 		while(my $line = <$fh>){
 			chomp $line;
@@ -508,7 +508,7 @@ sub rename {
 			print $ch join(q/:/, $name, $passwd, $gid, $users),"\n";
 		}
 		close($fh);close($ch);
-		move($tmp, $self->gshadow_file()) or do { $errstr = "Can't replace gshadow file ".$self->gshadow_file.": $!"; return };
+		move($tmp, $self->gshadow_file()) or do { $errstr = "Can't replace gshadow file ".$self->gshadow_file.": $! (".__FILE__." line ".__LINE__.")"; return };
 ;
 	}
 
@@ -522,7 +522,7 @@ sub rename {
 sub maxgid {
 	my $self = scalar @_ && ref $_[0] eq __PACKAGE__ ? shift : $Self;
 	my $max = 0;
-	open(my $fh, '<', $self->passwd_file()) or do { $errstr = "Can't open passwd file ".$self->passwd_file.": $!"; return };
+	open(my $fh, '<', $self->passwd_file()) or do { $errstr = "Can't open passwd file ".$self->passwd_file.": $! (".__FILE__." line ".__LINE__.")"; return };
 	while(<$fh>){
 		my $tmp = (split(/:/,$_))[3];
 		$max = $tmp > $max ? $tmp : $max;
@@ -535,7 +535,7 @@ sub maxgid {
 sub maxuid {
 	my $self = scalar @_ && ref $_[0] eq __PACKAGE__ ? shift : $Self;
 	my $max = 0;
-	open(my $fh, '<', $self->passwd_file()) or do { $errstr = "Can't open passwd file ".$self->passwd_file.": $!"; return };
+	open(my $fh, '<', $self->passwd_file()) or do { $errstr = "Can't open passwd file ".$self->passwd_file.": $! (".__FILE__." line ".__LINE__.")"; return };
 	while(<$fh>){
 		my $tmp = (split(/:/,$_))[2];
 		$max = $tmp > $max ? $tmp : $max;
@@ -550,7 +550,7 @@ sub _exists {
 	return if scalar @_ != 3;
 	my ($file, $pos, $val) = @_;
 
-	open(my $fh, '<', $file) or do { $errstr = "Can't open file $file: $!"; return };
+	open(my $fh, '<', $file) or do { $errstr = "Can't open file $file: $! (".__FILE__." line ".__LINE__.")"; return };
 	$errstr = "";
         while(<$fh>){
 		my @a = split /:/;
@@ -593,7 +593,7 @@ sub user {
 	}
 
 	if(scalar @_ != 7){
-		open(my $fh, '<', $self->passwd_file()) or do { $errstr = "Can't open passwd file ".$self->passwd_file.": $!"; return };
+		open(my $fh, '<', $self->passwd_file()) or do { $errstr = "Can't open passwd file ".$self->passwd_file.": $! (".__FILE__." line ".__LINE__.")"; return };
 		while(<$fh>){
 			my @a = split /:/;
 			next if $a[0] ne $user[0];
@@ -627,8 +627,8 @@ sub user {
 
 	my $mod;
 	my $tmp = $self->passwd_file.'.tmp';
-	open(my $fh, '<', $self->passwd_file()) or do { $errstr = "Can't open passwd file ".$self->passwd_file.": $!"; return };
-	open(my $ch, '>', $tmp) or do { $errstr = "Can't open tmp file $tmp: $!"; return };
+	open(my $fh, '<', $self->passwd_file()) or do { $errstr = "Can't open passwd file ".$self->passwd_file.": $! (".__FILE__." line ".__LINE__.")"; return };
+	open(my $ch, '>', $tmp) or do { $errstr = "Can't open tmp file $tmp: $! (".__FILE__." line ".__LINE__.")"; return };
 	chmod PERM_PWD, $ch;
 	while(<$fh>){
 		my @a = split /:/;
@@ -640,12 +640,12 @@ sub user {
 	close($fh);
 	print $ch join(q/:/, @user),"\n" unless $mod;
 	close($ch);
-	move($tmp, $self->passwd_file()) or do { $errstr = "Can't replace passwd file ".$self->passwd_file.": $!"; return };
+	move($tmp, $self->passwd_file()) or do { $errstr = "Can't replace passwd file ".$self->passwd_file.": $! (".__FILE__." line ".__LINE__.")"; return };
 
 	# user already exists
 	if($mod){ $self->passwd($user[0], $passwd); }
 	else{
-		open(my $fh, '>>', $self->shadow_file()) or do { $errstr = "Can't open shadow file ".$self->shadow_file.": $!"; return };
+		open(my $fh, '>>', $self->shadow_file()) or do { $errstr = "Can't open shadow file ".$self->shadow_file.": $! (".__FILE__." line ".__LINE__.")"; return };
 		chmod PERM_SHD, $fh;
 		print $fh join(q/:/, $user[0], $passwd, int(time()/DAY), ('') x 5, "\n");
 		close($fh);
@@ -659,7 +659,7 @@ sub user {
 sub users {
 	my $self = scalar @_ && ref $_[0] eq __PACKAGE__ ? shift : $Self;
 	my @a;
-	open(my $fh, '<', $self->passwd_file()) or do { $errstr = "Can't open passwd file ".$self->passwd_file.": $!"; return };
+	open(my $fh, '<', $self->passwd_file()) or do { $errstr = "Can't open passwd file ".$self->passwd_file.": $! (".__FILE__." line ".__LINE__.")"; return };
 	push @a, (split(/:/,$_))[0] while <$fh>;
 	close($fh);
         $errstr = "";
@@ -669,7 +669,7 @@ sub users {
 sub users_from_shadow {
 	my $self = scalar @_ && ref $_[0] eq __PACKAGE__ ? shift : $Self;
 	my @a;
-	open(my $fh, '<', $self->shadow_file()) or do { $errstr = "Can't open shadow file ".$self->shadow_file.": $!"; return };
+	open(my $fh, '<', $self->shadow_file()) or do { $errstr = "Can't open shadow file ".$self->shadow_file.": $! (".__FILE__." line ".__LINE__.")"; return };
 	push @a, (split(/:/,$_))[0] while <$fh>;
 	close($fh);
 	$errstr = "";
@@ -693,8 +693,8 @@ sub del_group {
 
 	my @dels;
 	my $tmp = $self->group_file.'.tmp';
-	open(my $fh, '<', $self->group_file()) or do { $errstr = "Can't open group file ".$self->group_file.": $!"; return };
-	open(my $ch, '>', $tmp) or do { $errstr = "Can't open tmp file $tmp: $!"; return };
+	open(my $fh, '<', $self->group_file()) or do { $errstr = "Can't open group file ".$self->group_file.": $! (".__FILE__." line ".__LINE__.")"; return };
+	open(my $ch, '>', $tmp) or do { $errstr = "Can't open tmp file $tmp: $! (".__FILE__." line ".__LINE__.")"; return };
 	chmod PERM_GRP, $ch;
 	while(my $line = <$fh>){
 		my ($name) = split(/:/,$line,2);
@@ -702,19 +702,19 @@ sub del_group {
 		else{ print $ch $line; }
 	}
 	close($fh);close($ch);
-	move($tmp, $self->group_file()) or do { $errstr = "Can't replace group file ".$self->group_file.": $!"; return };
+	move($tmp, $self->group_file()) or do { $errstr = "Can't replace group file ".$self->group_file.": $! (".__FILE__." line ".__LINE__.")"; return };
 
 	if(-f $self->gshadow_file){
 		my $tmp = $self->gshadow_file.'.tmp';
-		open(my $fh, '<', $self->gshadow_file()) or do { $errstr = "Can't open gshadow file ".$self->gshadow_file.": $!"; return };
-		open(my $ch, '>', $tmp) or do { $errstr = "Can't open tmp file $tmp: $!"; return };
+		open(my $fh, '<', $self->gshadow_file()) or do { $errstr = "Can't open gshadow file ".$self->gshadow_file.": $! (".__FILE__." line ".__LINE__.")"; return };
+		open(my $ch, '>', $tmp) or do { $errstr = "Can't open tmp file $tmp: $! (".__FILE__." line ".__LINE__.")"; return };
 		chmod PERM_SHD, $ch;
 		while(my $line = <$fh>){
 			my ($name) = split(/:/,$line,2);
 			print $ch $line if $group ne $name;
 		}
 		close($fh);close($ch);
-		move($tmp, $self->gshadow_file()) or do { $errstr = "Can't replace gshadow file ".$self->gshadow_file.": $!"; return };
+		move($tmp, $self->gshadow_file()) or do { $errstr = "Can't replace gshadow file ".$self->gshadow_file.": $! (".__FILE__." line ".__LINE__.")"; return };
 	}
 
 	umask $umask;
@@ -766,8 +766,8 @@ sub group {
 
 		my $mod;
 		my $tmp = $self->group_file.'.tmp';
-		open(my $fh, '<', $self->group_file()) or do { $errstr = "Can't open group file ".$self->group_file.": $!"; return };
-		open(my $ch, '>', $tmp) or do { $errstr = "Can't open tmp file $tmp: $!"; return };
+		open(my $fh, '<', $self->group_file()) or do { $errstr = "Can't open group file ".$self->group_file.": $! (".__FILE__." line ".__LINE__.")"; return };
+		open(my $ch, '>', $tmp) or do { $errstr = "Can't open tmp file $tmp: $! (".__FILE__." line ".__LINE__.")"; return };
 		chmod PERM_GRP, $ch;
 		while(my $line = <$fh>){
 			chomp $line;
@@ -779,13 +779,13 @@ sub group {
 		}
 		print $ch join(q/:/, $group, 'x', $gid, join(q/,/, @$users)),"\n" unless $mod;
 		close($fh);close($ch);
-		move($tmp, $self->group_file()) or do { $errstr = "Can't replace group file ".$self->group_file.": $!"; return };
+		move($tmp, $self->group_file()) or do { $errstr = "Can't replace group file ".$self->group_file.": $! (".__FILE__." line ".__LINE__.")"; return };
 
 		if(-f $self->gshadow_file){
 			my $mod;
 			my $tmp = $self->gshadow_file.'.tmp';
-			open(my $fh, '<', $self->gshadow_file()) or do { $errstr = "Can't open gshadow file ".$self->gshadow_file.": $!"; return };
-			open(my $ch, '>', $tmp) or do { $errstr = "Can't open tmp file $tmp: $!"; return };
+			open(my $fh, '<', $self->gshadow_file()) or do { $errstr = "Can't open gshadow file ".$self->gshadow_file.": $! (".__FILE__." line ".__LINE__.")"; return };
+			open(my $ch, '>', $tmp) or do { $errstr = "Can't open tmp file $tmp: $! (".__FILE__." line ".__LINE__.")"; return };
 			chmod PERM_SHD, $ch;
 			while(my $line = <$fh>){
 				chomp $line;
@@ -797,13 +797,13 @@ sub group {
 			}
 			print $ch join(q/:/, $group, '!', q//, join(q/,/, @$users)),"\n" unless $mod;
 			close($fh);close($ch);
-			move($tmp, $self->gshadow_file()) or do { $errstr = "Can't replace gshadow file ".$self->gshadow_file.": $!"; return };
+			move($tmp, $self->gshadow_file()) or do { $errstr = "Can't replace gshadow file ".$self->gshadow_file.": $! (".__FILE__." line ".__LINE__.")"; return };
 		}
 
 		umask $umask;
 	}else{
 		my ($gid, @users);
-		open(my $fh, '<', $self->group_file()) or do { $errstr = "Can't open group file ".$self->group_file.": $!"; return };
+		open(my $fh, '<', $self->group_file()) or do { $errstr = "Can't open group file ".$self->group_file.": $! (".__FILE__." line ".__LINE__.")"; return };
 		while(my $line = <$fh>){
 			chomp $line;
 			my ($name, undef, $id, $usrs) = split(/:/,$line,4);
@@ -820,7 +820,7 @@ sub group {
                     return undef, [ ];
                 }
 
-		open($fh, '<', $self->passwd_file()) or do { $errstr = "Can't open group file ".$self->group_file.": $!"; return };
+		open($fh, '<', $self->passwd_file()) or do { $errstr = "Can't open group file ".$self->group_file.": $! (".__FILE__." line ".__LINE__.")"; return };
 		while(my $line = <$fh>){
 			my ($login, undef, undef, $id) = split(/:/,$line,5);
 			next if $id != $gid;
@@ -843,7 +843,7 @@ sub group {
 sub groups {
 	my $self = scalar @_ && ref $_[0] eq __PACKAGE__ ? shift : $Self;
 	my @a;
-	open(my $fh, '<', $self->group_file()) or do { $errstr = "Can't open group file ".$self->group_file.": $!"; return };
+	open(my $fh, '<', $self->group_file()) or do { $errstr = "Can't open group file ".$self->group_file.": $! (".__FILE__." line ".__LINE__.")"; return };
         push @a, (split(/:/,$_))[0] while <$fh>;
 	close($fh);
 	return @a;
@@ -852,7 +852,7 @@ sub groups {
 sub groups_from_gshadow {
 	my $self = scalar @_ && ref $_[0] eq __PACKAGE__ ? shift : $Self;
 	my @a;
-	open(my $fh, '<', $self->gshadow_file()) or do { $errstr = "Can't open gshadow file ".$self->gshadow_file.": $!"; return };
+	open(my $fh, '<', $self->gshadow_file()) or do { $errstr = "Can't open gshadow file ".$self->gshadow_file.": $! (".__FILE__." line ".__LINE__.")"; return };
 	push @a, (split(/:/,$_))[0] while <$fh>;
 	close($fh);
 	$errstr = "";
