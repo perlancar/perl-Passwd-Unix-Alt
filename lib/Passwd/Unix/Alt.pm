@@ -78,7 +78,6 @@ sub new {
 	return $self;
 }
 #======================================================================
-# a simple 5.10 version to show difference (added/deleted items) between 2 lists
 sub array_compare {
     my ($aname, $a, $bname, $b) = @_;
     my @aonly = grep {!($_ ~~ @$b)} @$a;
