@@ -14,7 +14,6 @@ use File::Spec;
 use File::Path;
 use File::Copy;
 use File::Basename qw(dirname basename);
-use Struct::Compare;
 use Crypt::PasswdMD5 qw(unix_md5_crypt);
 require Exporter;
 #======================================================================
@@ -79,6 +78,17 @@ sub new {
 	return $self;
 }
 #======================================================================
+# a simple 5.10 version to show difference (added/deleted items) between 2 lists
+sub array_compare {
+    my ($aname, $a, $bname, $b) = @_;
+    my @aonly = grep {!($_ ~~ @$b)} @$a;
+    my @bonly = grep {!($_ ~~ @$a)} @$b;
+    join("; ", grep {length} (
+        (@aonly ? "only in $aname: ".join(", ", @aonly) : ""),
+        (@bonly ? "only in $bname: ".join(", ", @bonly) : ""),
+    ));
+}
+#======================================================================
 sub check_sanity {
 	my $self = scalar @_ && ref $_[0] eq __PACKAGE__ ? shift : $Self;
 	my $quiet = shift;
@@ -103,8 +113,9 @@ sub check_sanity {
 		}
 	}
 
-	unless(compare([$self->users()], [$self->users_from_shadow()])){
-		carp(qq/\nYour ENVIRONMENT IS INSANE! Users in files "/.$self->passwd_file().q/" and "/.$self->shadow_file().qq/" are different!!!\nI'll continue, but it is YOUR RISK! You'll probably go into BIG troubles!\n\n/);
+	my $diff = array_compare("passwd", [$self->users()], "shadow", [$self->users_from_shadow()]);
+	if ($diff) {
+		carp(qq/\nYour ENVIRONMENT IS INSANE! Users in files "/.$self->passwd_file().q/" and "/.$self->shadow_file().qq/" are different!!!\n\n $diff\n\nI'll continue, but it is YOUR RISK! You'll probably go into BIG troubles!\n\n/);
 		warn "\a\n";
 		sleep 0;
 	}
