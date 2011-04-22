@@ -49,7 +49,7 @@ my $_CHECK = {
 	'uid'		=> sub { return if not defined $_[0] or $_[0] !~ /^[0-9]+$/o; TRUE },
 	'home'		=> sub { return if not defined $_[0] or $_[0] !~ PATH; TRUE },
 	'shell'		=> sub { return if not defined $_[0] or $_[0] !~ PATH; TRUE },
-	'gecos'		=> sub { return if not defined $_[0] or $_[0] !~ /^[^:]+$/o; TRUE },
+	'gecos'		=> sub { return if not defined $_[0] or $_[0] !~ /^[^:]*$/o; TRUE },
 	'passwd' 	=> sub { return if not defined $_[0]; TRUE},
 };
 #======================================================================

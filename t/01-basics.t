@@ -48,7 +48,7 @@ ok(!$Passwd::Unix::Alt::errstr, "group(u2): errstr is not set");
 # add
 
 @res = $pu->user("u3", $pu->encpass("u1"), 1010, 1010,
-                 "gecos", "/home/u3", "/bin/bash");
+                 "", "/home/u3", "/bin/bash");
 is($res[0], 1, "add user u3: returns") or diag explain \@res;
 ok(!$Passwd::Unix::Alt::errstr, "add user u3: errstr is not set");
 @res = $pu->user("u3");
