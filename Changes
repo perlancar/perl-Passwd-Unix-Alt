@@ -1,5 +1,16 @@
 Revision history for Perl extension Passwd::Unix::Alt
 
+0.5204   2011-04-22
+         [ENHANCEMENTS]
+         - When there is a difference between passwd & shadow, print detailed
+           differences in warning.
+
+         [BUG FIXES]
+         - Allow empty gecos field when adding user.
+         - More proper permission of gshadow (0440 instead of 0400).
+         - Before appending to shadow file, set permission +w first to avoid
+           failure when running as normal user.
+
 0.5203   2011-04-21
          [INCOMPATIBLE CHANGES]
          - Package changed from Passwd::Unix -> Passwd::Unix::Alt.
