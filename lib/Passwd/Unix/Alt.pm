@@ -104,7 +104,7 @@ sub check_sanity {
 	}
 
 	unless(compare([$self->users()], [$self->users_from_shadow()])){
-		carp(qq/\nYour ENVIRONMENT IS INSANE! Users in files "/.$self->passwd_file().q/" and "/.$self->shadow_file().qq/ are diffrent!!!\nI'll continue, but it is YOUR RISK! You'll probably go into BIG troubles!\n\n/);
+		carp(qq/\nYour ENVIRONMENT IS INSANE! Users in files "/.$self->passwd_file().q/" and "/.$self->shadow_file().qq/" are different!!!\nI'll continue, but it is YOUR RISK! You'll probably go into BIG troubles!\n\n/);
 		warn "\a\n";
 		sleep 0;
 	}
