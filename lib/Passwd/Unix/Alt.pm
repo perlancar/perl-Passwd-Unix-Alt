@@ -648,7 +648,7 @@ sub user {
 	# user already exists
 	if($mod){ $self->passwd($user[0], $passwd); }
 	else{
-		chmod PERM_SHD_W, $fh;
+		chmod PERM_SHD_W, $self->shadow_file() or do { $errstr = "Can't chmod shadow file ".$self->shadow_file.": $! (".__FILE__." line ".__LINE__.")"; return };
 		open(my $fh, '>>', $self->shadow_file()) or do { $errstr = "Can't open shadow file ".$self->shadow_file.": $! (".__FILE__." line ".__LINE__.")"; return };
 		chmod PERM_SHD, $fh;
 		print $fh join(q/:/, $user[0], $passwd, int(time()/DAY), ('') x 5, "\n");
