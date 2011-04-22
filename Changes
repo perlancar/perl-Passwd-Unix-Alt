@@ -1,5 +1,9 @@
 Revision history for Perl extension Passwd::Unix::Alt
 
+0.5205   2011-04-22
+         [BUG FIXES]
+         - Disallow newlines in gecos.
+
 0.5204   2011-04-22
          [ENHANCEMENTS]
          - When there is a difference between passwd & shadow, print detailed
