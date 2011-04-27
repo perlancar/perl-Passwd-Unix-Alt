@@ -881,7 +881,7 @@ sub groups_from_gshadow {
 
 	my $pu = Passwd::Unix::Alt->new();
 
-	# adding a new user
+	# add a new user
         $pu->user("example", $pu->encpass("my_secret"), $pu->maxuid + 1, 10,
 					  "My User", "/home/example", "/bin/bash");
 	die $Passwd::Unix::Alt::errstr if $Passwd::Unix::Alt::errstr;
