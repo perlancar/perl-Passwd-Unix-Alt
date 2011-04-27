@@ -1,5 +1,11 @@
 Revision history for Perl extension Passwd::Unix::Alt
 
+0.5206   2011-04-27
+         No functional changes
+
+         [BUG FIXES]
+         - Add missing dependency to File::Slurp [CT].
+
 0.5205   2011-04-22
          [BUG FIXES]
          - Disallow newlines in gecos.
