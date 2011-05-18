@@ -1,5 +1,8 @@
 Revision history for Perl extension Passwd::Unix::Alt
 
+0.5207   2011-05-18
+         No functional changes. Fix setting $VERSION.
+
 0.5206   2011-04-27
          No functional changes
 
