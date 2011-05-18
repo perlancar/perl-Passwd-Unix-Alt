@@ -17,7 +17,6 @@ use File::Basename qw(dirname basename);
 use Crypt::PasswdMD5 qw(unix_md5_crypt);
 require Exporter;
 #======================================================================
-$VERSION = '0.52';
 @ISA = qw(Exporter);
 @EXPORT_OK = qw(check_sanity reset encpass passwd_file shadow_file
 				group_file backup debug warnings del del_user uid gid
