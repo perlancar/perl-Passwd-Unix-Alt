@@ -947,6 +947,11 @@ Notable differences from Passwd::Unix v0.52:
 
 Instead of just returning true/false status or carping to stderr.
 
+=item * does not use bzip2 for backup files
+
+I find compression not really necessary yet, plus bzip2 is not available in some
+systems.
+
 =back
 
 The rest of the documentation is Passwd::Unix's.
