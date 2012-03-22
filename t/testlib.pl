@@ -11,6 +11,9 @@ use Test::More 0.96;
 my $tmp_dir;
 
 sub setup {
+    my ($pua_extra_args) = @_;
+    $pua_extra_args //= {};
+
     $tmp_dir = tempdir(CLEANUP=>1);
     $CWD = $tmp_dir;
     diag "tmp dir is $tmp_dir";
@@ -53,6 +56,7 @@ _
         group   => "$tmp_dir/group",
         shadow  => "$tmp_dir/shadow",
         gshadow => "$tmp_dir/gshadow",
+	%$pua_extra_args,
     );
 }
 

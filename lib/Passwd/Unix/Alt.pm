@@ -15,6 +15,9 @@ use File::Path;
 use File::Copy;
 use File::Basename qw(dirname basename);
 use Crypt::PasswdMD5 qw(unix_md5_crypt);
+use Log::Any qw($log);
+use File::Flock;
+use Sub::ScopeFinalizer qw(scope_finalizer);
 require Exporter;
 #======================================================================
 @ISA = qw(Exporter);
@@ -33,6 +36,7 @@ use constant GROUP  	=> '/etc/group';
 use constant SHADOW 	=> '/etc/shadow';
 use constant GSHADOW  	=> '/etc/gshadow';
 use constant BACKUP 	=> TRUE;
+use constant LOCK 	=> FALSE;
 use constant DEBUG  	=> FALSE;
 use constant WARNINGS 	=> FALSE;
 use constant UMASK		=> 0022;
@@ -67,6 +71,7 @@ sub new {
 				shadow 		=> (defined $params{shadow} 	? $params{shadow} 	: SHADOW	),
 				gshadow 	=> (defined $params{gshadow} 	? $params{gshadow} 	: GSHADOW	),
 				backup 		=> (defined $params{backup} 	? $params{backup} 	: BACKUP	),
+				lock 		=> (defined $params{lock} 	? $params{lock} 	: LOCK	),
 				debug 		=> (defined $params{debug} 		? $params{debug} 	: DEBUG		),
 				warnings	=> (defined $params{warnings} 	? $params{warnings} : WARNINGS	),
 				'umask'		=> (defined $params{'umask'} 	? $params{'umask'}	: UMASK		),
@@ -173,6 +178,25 @@ sub _do_backup {
 	$errstr = "";
         return 1;
 }
+
+sub _lock {
+	my $self = scalar @_ && ref $_[0] eq __PACKAGE__ ? shift : $Self;
+	return unless $self->{lock};
+	for ($self->passwd_file, $self->shadow_file, $self->group_file, $self->gshadow_file) {
+		$log->tracef("Locking %s ...", $_);
+		lock($_);
+	}
+}
+
+sub _unlock {
+	my $self = scalar @_ && ref $_[0] eq __PACKAGE__ ? shift : $Self;
+	return unless $self->{lock};
+	for (reverse($self->passwd_file, $self->shadow_file, $self->group_file, $self->gshadow_file)) {
+		$log->tracef("Unlocking %s ...", $_);
+		unlock($_);
+	}
+}
+
 #======================================================================
 sub passwd_file {
 	my $self = scalar @_ && ref $_[0] eq __PACKAGE__ ? shift : $Self;
@@ -249,7 +273,9 @@ sub del {
                 return;
 	}
 
-        if ($self->backup()) {
+	$self->_lock();
+	my $anchor = scope_finalizer { $self->_unlock() };
+	if ($self->backup()) {
             $self->_do_backup() or return;
         }
 
@@ -342,6 +368,8 @@ sub _set {
                 return;
 	}
 
+	$self->_lock();
+	my $anchor = scope_finalizer { $self->_unlock() };
         if ($self->backup()) {
             $self->_do_backup() or return;
         }
@@ -490,6 +518,8 @@ sub rename {
                 return;
 	}
 
+	$self->_lock();
+	my $anchor = scope_finalizer { $self->_unlock() };
         if ($self->backup()) {
             $self->_do_backup() or return;
         }
@@ -630,6 +660,8 @@ sub user {
 	}
 
 
+	$self->_lock();
+	my $anchor = scope_finalizer { $self->_unlock() };
         if ($self->backup()) {
             $self->_do_backup() or return;
         }
@@ -699,6 +731,8 @@ sub del_group {
 		return;
 	}
 
+	$self->_lock();
+	my $anchor = scope_finalizer { $self->_unlock() };
         if ($self->backup()) {
             $self->_do_backup() or return;
         }
@@ -748,6 +782,8 @@ sub group {
 	}
 
 	if(scalar @_ == 3){
+		$self->_lock();
+		my $anchor = scope_finalizer { $self->_unlock() };
                 if ($self->backup()) {
                     $self->_do_backup() or return;
                 }
@@ -947,6 +983,10 @@ Notable differences from Passwd::Unix v0.52:
 
 Instead of just returning true/false status or carping to stderr.
 
+=item * add lock option
+
+Currently not enabled by default, needs more testing.
+
 =item * does not use bzip2 for backup files
 
 I find compression not really necessary yet, plus bzip2 is not available in some
@@ -991,6 +1031,8 @@ Constructor. Possible parameters are:
 =item B<umask> - umask for creating files; default C<0022> (standard for UNIX and Linux systems)
 
 =item B<backup> - boolean; if set to C<1>, backup will be made; default C<1>
+
+=item B<lock> - boolean; if set to C<1>, flock() will be performed before modification; default C<0>
 
 =item B<warnings> - boolean; if set to C<1>, important warnings will be displayed; default C<0>
 
