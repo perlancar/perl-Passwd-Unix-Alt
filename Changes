@@ -1,5 +1,9 @@
 Revision history for Perl extension Passwd::Unix::Alt
 
+0.5210   2012-03-22
+	 [ENHANCEMENTS]
+	 - Add lock option (not enabled by default, need more testing).
+
 0.5209   2012-03-22
          No functional changes. More helpful error message [still RT# 75957]
 
