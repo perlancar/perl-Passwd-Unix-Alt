@@ -930,7 +930,10 @@ sub groups_from_gshadow {
 
 Passwd::Unix::Alt is a fork of Strzelecki Lukasz's L<Passwd::Unix> v0.52, which
 I forked to scratch some of I<my> itches, and which I hope can be merged back to
-Passwd::Unix eventually. Notable differences:
+Passwd::Unix eventually. I use this module because, despite its shortcomings, as
+of mid of 2011 I think it is still the best (or perhaps the only usable) module
+on CPAN to manipulate passwd and shadow entries. Notable differences from
+Passwd::Unix v0.52:
 
 =over 4
 
