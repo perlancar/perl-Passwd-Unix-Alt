@@ -1,5 +1,10 @@
 Revision history for Perl extension Passwd::Unix::Alt
 
+0.5208   2012-03-22
+         No functional changes. Check for file readability to confusing error
+         message when /etc/shadow or /etc/gshadow is empty and entries assumed
+         different from /etc/passwd or /etc/group [#CT 75957]
+
 0.5207   2011-05-18
          No functional changes. Fix setting $VERSION.
 
