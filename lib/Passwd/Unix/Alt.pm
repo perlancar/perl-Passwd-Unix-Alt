@@ -930,19 +930,21 @@ sub groups_from_gshadow {
 
 Passwd::Unix::Alt is a fork of Strzelecki Lukasz's L<Passwd::Unix> v0.52, which
 I forked to scratch some of I<my> itches, and which I hope can be merged back to
-Passwd::Unix eventually. The rest of the documentation is Passwd::Unix's.
-
-Notable differences:
+Passwd::Unix eventually. Notable differences:
 
 =over 4
+
+=item * add some tests
 
 =item * does not require root privileges unless necessary (useful for testing)
 
 =item * report error string in $Passwd::Unix::Alt::errstr
 
-Instead of just returning true/false status or carping to stderr..
+Instead of just returning true/false status or carping to stderr.
 
 =back
+
+The rest of the documentation is Passwd::Unix's.
 
 =head1 ABSTRACT
 
