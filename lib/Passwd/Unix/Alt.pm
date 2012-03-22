@@ -93,7 +93,7 @@ sub check_sanity {
 
 	for($self->shadow_file, $self->passwd_file, $self->group_file){
 		croak('File not found or not a file: ' . $_) unless -f $_;
-		croak('File not readable: ' . $_) unless -r _;
+		croak('File not readable: ' . $_ . ($> && m!^/etc! ? ". You are trying to access passwd and/or shadow file from /etc/; either use other files or re-run the program as root.\n" : "\n")) unless -r _;
 
 	}
 
