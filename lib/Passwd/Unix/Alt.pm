@@ -92,8 +92,9 @@ sub check_sanity {
 	my $quiet = shift;
 
 	for($self->shadow_file, $self->passwd_file, $self->group_file){
-		next if -f $_;
-		croak('File not found: ' . $_);
+		croak('File not found or not a file: ' . $_) unless -f $_;
+		croak('File not readable: ' . $_) unless -r _;
+
 	}
 
         unless ($quiet) {
