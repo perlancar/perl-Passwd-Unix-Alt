@@ -1014,7 +1014,7 @@ what is necessary in modern systems like Sun Solaris 10 or Linux).
 
 =over 4
 
-=item B<new( [ param0 => 1, param1 => 0... ] )>
+=item B<new>( [ param0 => 1, param1 => 0... ] )
 
 Constructor. Possible parameters are:
 
