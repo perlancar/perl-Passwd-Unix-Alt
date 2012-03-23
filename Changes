@@ -1,4 +1,9 @@
-Revision history for Perl extension Passwd::Unix::Alt
+Revision history for Perl extension Passwd-Unix-Alt
+
+0.5211   2012-03-23
+	 - Fix Perl warning in t/02-lock.t [RT #75991]
+	 - Incorporate tests by Christian Kuelker, originally developed for
+           Passwd-Unix and geared towards Debian [RT #75993]
 
 0.5210   2012-03-22
 	 [ENHANCEMENTS]
