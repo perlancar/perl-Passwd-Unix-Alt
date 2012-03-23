@@ -1,3 +1,4 @@
 ((nil . ((indent-tabs-mode . t)
          (tab-width . 8)
-         (fill-column . 80))))
+         ; (fill-column . 80)
+	 )))
