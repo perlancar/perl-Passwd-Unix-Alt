@@ -2,7 +2,7 @@
 
 use 5.010;
 use strict;
-#use warnings;
+use warnings;
 
 use FindBin '$Bin';
 use lib $Bin, "$Bin/t";
@@ -26,7 +26,10 @@ is($res[0], "root", "users(): return[0]");
 @res = $pu->user("u3", $pu->encpass("u1"), 1010, 1010,
                  "", "/home/u3", "/bin/bash");
 is($res[0], 1, "add user u3: returns") or diag explain \@res;
-ok(!$Passwd::Unix::Alt::errstr, "add user u3: errstr is not set");
+{
+    no warnings;
+    ok(!$Passwd::Unix::Alt::errstr, "add user u3: errstr is not set");
+}
 @res = $pu->user("u3");
 ok(@res, "add user u3: user u3 now exists");
 
