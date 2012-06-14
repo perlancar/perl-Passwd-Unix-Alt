@@ -1,36 +1,36 @@
 Revision history for Perl extension Passwd-Unix-Alt
 
-0.5211   2012-03-23
+0.5211   2012-03-23 (SHARYANTO)
 	 - Fix Perl warning in t/02-lock.t [RT #75991]
 	 - Incorporate tests by Christian Kuelker, originally developed for
            Passwd-Unix and geared towards Debian [RT #75993]
 
-0.5210   2012-03-22
+0.5210   2012-03-22 (SHARYANTO)
 	 [ENHANCEMENTS]
 	 - Add lock option (not enabled by default, need more testing).
 
-0.5209   2012-03-22
+0.5209   2012-03-22 (SHARYANTO)
          No functional changes. More helpful error message [still RT# 75957]
 
-0.5208   2012-03-22
+0.5208   2012-03-22 (SHARYANTO)
          No functional changes. Check for file readability to confusing error
          message when /etc/shadow or /etc/gshadow is empty and entries assumed
          different from /etc/passwd or /etc/group [RT# 75957]
 
-0.5207   2011-05-18
+0.5207   2011-05-18 (SHARYANTO)
          No functional changes. Fix setting $VERSION.
 
-0.5206   2011-04-27
+0.5206   2011-04-27 (SHARYANTO)
          No functional changes
 
          [BUG FIXES]
          - Add missing dependency to File::Slurp [CT].
 
-0.5205   2011-04-22
+0.5205   2011-04-22 (SHARYANTO)
          [BUG FIXES]
          - Disallow newlines in gecos.
 
-0.5204   2011-04-22
+0.5204   2011-04-22 (SHARYANTO)
          [ENHANCEMENTS]
          - When there is a difference between passwd & shadow, print detailed
            differences in warning.
@@ -41,15 +41,15 @@ Revision history for Perl extension Passwd-Unix-Alt
          - Before appending to shadow file, set permission +w first to avoid
            failure when running as normal user.
 
-0.5203   2011-04-21
+0.5203   2011-04-21 (SHARYANTO)
          [INCOMPATIBLE CHANGES]
          - Package changed from Passwd::Unix -> Passwd::Unix::Alt.
 
-0.5202   2011-04-21
+0.5202   2011-04-21 (SHARYANTO)
          [ETC]
          - Second attempt to pass PAUSE indexer
 
-0.5201   2011-04-21
+0.5201   2011-04-21 (SHARYANTO)
          [ENHANCEMENTS]
          - Set $Passwd::Unix::errstr on errors
          - No longer require running as root even (unless necessary)
