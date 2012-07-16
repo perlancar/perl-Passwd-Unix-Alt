@@ -18,8 +18,8 @@ my $pua = Passwd::Unix::Alt->new(
     gshadow => 't/tmp/gshadow-debian',
 );
 
-my $maxgid = $pua->maxuid;
-ok( $maxgid == 65534, 'maxuid: max uid is 65534' );
+my $maxgid = $pua->maxgid;
+is( $maxgid, 65535, 'maxgid: max gid is 65535' );
 
 # cleanup
 rmtree 't/tmp';
