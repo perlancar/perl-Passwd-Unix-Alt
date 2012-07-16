@@ -1,11 +1,8 @@
 package Passwd::Unix::Alt;
-# ABSTRACT: Manipulate /etc/{passwd,shadow,group,gshadow} entries
-
-=for Pod::Coverage .*
-
-=cut
 
 use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);
+
+# VERSION
 
 use warnings;
 use strict;
@@ -910,6 +907,9 @@ sub groups_from_gshadow {
 }
 #======================================================================
 1;
+# ABSTRACT: Manipulate /etc/{passwd,shadow,group,gshadow} entries
+
+=for Pod::Coverage .*
 
 =head1 SYNOPSIS
 
